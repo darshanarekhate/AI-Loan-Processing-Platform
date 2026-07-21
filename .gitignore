@@ -1,12 +1,24 @@
+# Environment variables
 .env
+
+# Python virtual environment
 .venv/
+
+# Python cache
 __pycache__/
 *.pyc
 
+# Database
+*.db
+*.sqlite3
+
+# VS Code
+.vscode/
+
+# Generated files
 reports/
 uploads/
 
-*.sqlite3
-*.db
-
-.vscode/
+# Personal documents
+pan.png
+aadhar.png
