@@ -1,0 +1,216 @@
+=========================================
+FREQUENTLY ASKED QUESTIONS (FAQ)
+=========================================
+
+1. General Questions
+
+Q. What types of loans are supported?
+
+The system provides information about:
+• Home Loans
+• Personal Loans
+• Car Loans
+• Education Loans
+
+-----------------------------------------
+
+Q. How do I apply for a loan?
+
+Submit the required application form along with identity, address, and income documents. The application then undergoes verification and assessment.
+
+-----------------------------------------
+
+Q. How long does loan approval take?
+
+Processing time depends on document verification, KYC completion, fraud assessment, and internal review. Complete and accurate applications are usually processed faster.
+
+-----------------------------------------
+
+2. Eligibility
+
+Q. What is the minimum age to apply?
+
+Most loan products require applicants to be at least 21 years old.
+
+-----------------------------------------
+
+Q. What is the maximum age?
+
+The maximum age at loan maturity is generally between 65 and 70 years, depending on the loan product.
+
+-----------------------------------------
+
+Q. Does my salary affect eligibility?
+
+Yes. Stable income and repayment capacity are important factors in loan assessment.
+
+-----------------------------------------
+
+Q. Does my credit score matter?
+
+Yes. A higher credit score generally improves loan eligibility and may help secure better interest rates.
+
+-----------------------------------------
+
+3. Documents
+
+Q. What documents are required?
+
+Commonly required documents include:
+• PAN Card
+• Aadhaar Card
+• Address Proof
+• Income Proof
+• Bank Statements
+• Passport-size Photograph
+
+Additional documents may be needed depending on the loan type.
+
+-----------------------------------------
+
+Q. Can I upload scanned copies?
+
+Yes, provided they are clear, complete, and readable.
+
+-----------------------------------------
+
+Q. What happens if my document is unclear?
+
+The OCR system may not extract information accurately, and the application could require manual verification.
+
+-----------------------------------------
+
+4. OCR
+
+Q. What is OCR?
+
+OCR (Optical Character Recognition) extracts text from uploaded documents and converts it into machine-readable data.
+
+-----------------------------------------
+
+Q. Why is OCR confidence important?
+
+A higher confidence score indicates more reliable text extraction. Low confidence may require manual review.
+
+-----------------------------------------
+
+5. KYC
+
+Q. What does VERIFIED mean?
+
+All required identity details have matched successfully.
+
+-----------------------------------------
+
+Q. What does MANUAL REVIEW mean?
+
+Additional verification by a bank officer is required before processing continues.
+
+-----------------------------------------
+
+Q. What causes KYC failure?
+
+Common reasons include:
+• PAN mismatch
+• Aadhaar mismatch
+• Name mismatch
+• Incorrect Date of Birth
+• Poor document quality
+
+-----------------------------------------
+
+6. Fraud Detection
+
+Q. What is a fraud score?
+
+The fraud score estimates the likelihood of fraudulent activity. Lower scores generally indicate lower risk.
+
+-----------------------------------------
+
+Q. Does a low fraud score guarantee approval?
+
+No. Fraud assessment is only one part of the overall evaluation.
+
+-----------------------------------------
+
+Q. Why was my application reviewed manually?
+
+Manual review may occur when verification results are incomplete or additional checks are required.
+
+-----------------------------------------
+
+7. AI Loan Decision
+
+Q. Does AI approve my loan?
+
+No. AI provides a recommendation to assist the bank. The final decision follows the bank's review process and lending policies.
+
+-----------------------------------------
+
+Q. Why was my application rejected?
+
+Possible reasons include:
+• Low credit score
+• Insufficient income
+• Failed KYC
+• High fraud risk
+• Incomplete documentation
+• Policy non-compliance
+
+-----------------------------------------
+
+8. EMI
+
+Q. What is an EMI?
+
+An EMI (Equated Monthly Installment) is the fixed monthly amount paid to repay a loan.
+
+-----------------------------------------
+
+Q. Can I repay my loan early?
+
+Many loan products allow partial prepayment or foreclosure, subject to the terms and conditions of the loan agreement.
+
+-----------------------------------------
+
+9. Interest Rates
+
+Q. Are interest rates fixed?
+
+Some loans have fixed interest rates, while others use floating rates that may change over time.
+
+-----------------------------------------
+
+Q. How can I get a better interest rate?
+
+A strong credit score, stable income, and good repayment history may help you qualify for more competitive rates.
+
+-----------------------------------------
+
+10. Support
+
+Q. What should I do if my application is under manual review?
+
+Wait for the bank to complete additional verification. You may be contacted if further documents or information are required.
+
+-----------------------------------------
+
+Q. Can I update my documents after submission?
+
+Yes, if the bank requests revised or additional documents during the verification process.
+
+-----------------------------------------
+
+Q. How can I improve my chances of approval?
+
+You can improve your application by:
+• Maintaining a good credit score
+• Providing accurate information
+• Uploading clear documents
+• Completing KYC successfully
+• Ensuring stable income
+• Reducing existing debt where possible
+
+=========================================
+END OF FAQ
+=========================================

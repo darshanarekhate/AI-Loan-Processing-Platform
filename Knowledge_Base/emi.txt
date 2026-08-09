@@ -1,0 +1,182 @@
+=========================================
+EMI (EQUATED MONTHLY INSTALLMENT) GUIDE
+=========================================
+
+1. Introduction
+
+An Equated Monthly Installment (EMI) is the fixed amount a borrower pays every month to repay a loan. Each EMI consists of two components:
+
+• Principal Amount
+• Interest Amount
+
+EMIs continue until the entire loan is repaid.
+
+-----------------------------------------
+
+2. EMI Formula
+
+The standard EMI formula is:
+
+EMI = P × R × (1 + R)^N
+      --------------------
+      ((1 + R)^N − 1)
+
+Where:
+
+P = Loan Amount
+
+R = Monthly Interest Rate
+
+N = Loan Tenure (in months)
+
+-----------------------------------------
+
+3. Factors Affecting EMI
+
+EMI depends on:
+
+• Loan Amount
+• Interest Rate
+• Loan Tenure
+
+Increasing the loan amount or interest rate generally increases the EMI.
+
+Increasing the tenure usually reduces the monthly EMI but increases the total interest paid.
+
+-----------------------------------------
+
+4. Example Calculation
+
+Loan Amount:
+₹10,00,000
+
+Interest Rate:
+8.5% per annum
+
+Loan Tenure:
+20 Years
+
+The EMI is calculated using the bank's approved EMI formula.
+
+The exact amount depends on the applicable interest rate and repayment schedule.
+
+-----------------------------------------
+
+5. EMI Payment Methods
+
+Customers can pay EMIs through:
+
+• Auto Debit
+• ECS
+• NACH
+• Net Banking
+• UPI (where supported)
+• Standing Instructions
+
+-----------------------------------------
+
+6. EMI Due Date
+
+EMIs are due on the scheduled repayment date mentioned in the loan agreement.
+
+Late payments may attract penalties or additional interest.
+
+-----------------------------------------
+
+7. Missed EMI
+
+Missing an EMI may result in:
+
+• Late payment charges
+• Penal interest
+• Lower credit score
+• Collection activities
+• Higher repayment burden
+
+Repeated missed EMIs may lead to loan default.
+
+-----------------------------------------
+
+8. Prepayment
+
+Customers may partially prepay their loan before the scheduled tenure.
+
+Benefits include:
+
+• Lower outstanding principal
+• Reduced total interest
+• Faster loan closure
+
+Prepayment charges, if applicable, depend on bank policy.
+
+-----------------------------------------
+
+9. Foreclosure
+
+Loan foreclosure means repaying the outstanding loan balance before the original tenure ends.
+
+Applicable charges depend on the loan agreement and bank policy.
+
+-----------------------------------------
+
+10. EMI Schedule
+
+An EMI schedule typically includes:
+
+• Installment Number
+• Due Date
+• Principal Component
+• Interest Component
+• Outstanding Balance
+
+-----------------------------------------
+
+11. Fixed vs Floating Interest Rate
+
+Fixed Interest Rate:
+
+• EMI generally remains constant throughout the tenure.
+
+Floating Interest Rate:
+
+• EMI or tenure may change when benchmark interest rates change.
+
+-----------------------------------------
+
+12. Improving EMI Affordability
+
+Customers can reduce repayment burden by:
+
+• Choosing a longer tenure
+• Making a higher down payment
+• Improving credit score
+• Making partial prepayments
+• Selecting suitable loan products
+
+-----------------------------------------
+
+13. Frequently Asked Questions
+
+Q. What does EMI stand for?
+
+Equated Monthly Installment.
+
+Q. Can EMI change during the loan tenure?
+
+Yes, for floating-rate loans. Fixed-rate loans usually have constant EMIs.
+
+Q. Can I pay more than my EMI?
+
+Yes. Additional payments may reduce the outstanding principal, subject to bank policy.
+
+Q. What happens if I miss an EMI?
+
+Late charges, penal interest, and negative impact on your credit score may occur.
+
+Q. Does a longer tenure reduce EMI?
+
+Yes. However, a longer tenure generally increases the total interest paid over the life of the loan.
+
+=========================================
+END OF EMI GUIDE
+=========================================

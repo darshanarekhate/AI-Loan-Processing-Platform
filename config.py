@@ -5,7 +5,7 @@ import os
 load_dotenv()
 
 # Read the API key from the .env file
-GROQ_API_KEY = os.getenv("GROQ_API_KEY")
+GEMINI_API_KEY = os.getenv("GOOGLE_API_KEY")
 
 # Database
 DATABASE_PATH = "database/loan_kyc.db"

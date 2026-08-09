@@ -1,150 +1,232 @@
-import sqlite3
-
-from streamlit import cursor
-
-from config import DATABASE_PATH
+from database.ocr_repository import get_ocr_results
+from database.loan_repository import get_loans_by_customer
 
 
-def fraud_check(state):
+def fraud_check(application_id, customer_id):
 
-    conn = sqlite3.connect(
-        DATABASE_PATH,
-        check_same_thread=False
+    findings = []
+
+    risk_score = 0
+
+
+    # ---------------------------------
+    # OCR Document Validation
+    # ---------------------------------
+
+    ocr_results = get_ocr_results(
+        application_id
     )
 
-    cursor = conn.cursor()
 
-    fraud = False
-    reasons = []
+    for result in ocr_results:
 
-    # ----------------------------------------
-    # Get current user's PAN number
-    # ----------------------------------------
+        document_type = result["document_type"]
 
-    cursor.execute(
-        """
-        SELECT extracted_number
-        FROM documents
-        WHERE user_id=?
-        AND document_type='PAN'
-        """,
-        (state["user_id"],)
+        confidence = result["confidence"]
+
+
+        # -----------------------------
+        # PAN Validation
+        # -----------------------------
+
+        if document_type == "PAN":
+
+            missing_fields = []
+
+
+            if not result["extracted_name"]:
+                missing_fields.append(
+                    "Name"
+                )
+
+
+            if not result["extracted_pan"]:
+                missing_fields.append(
+                    "PAN Number"
+                )
+
+
+            if not result["extracted_dob"]:
+                missing_fields.append(
+                    "DOB"
+                )
+
+
+            if missing_fields:
+
+                findings.append(
+                    f"Missing PAN fields: {', '.join(missing_fields)}"
+                )
+
+                risk_score += 30
+
+
+
+        # -----------------------------
+        # Aadhaar Validation
+        # -----------------------------
+
+        elif document_type == "AADHAAR":
+
+            missing_fields = []
+
+
+            if not result["extracted_name"]:
+                missing_fields.append(
+                    "Name"
+                )
+
+
+            if not result["extracted_aadhaar"]:
+                missing_fields.append(
+                    "Aadhaar Number"
+                )
+
+
+            if not result["extracted_dob"]:
+                missing_fields.append(
+                    "DOB"
+                )
+
+
+            if missing_fields:
+
+                findings.append(
+                    f"Missing Aadhaar fields: {', '.join(missing_fields)}"
+                )
+
+                risk_score += 30
+
+
+
+        # -----------------------------
+        # OCR Confidence Analysis
+        # -----------------------------
+
+        if confidence is not None:
+
+
+            # Very low confidence
+            if confidence < 40:
+
+                findings.append(
+                    f"Very Low OCR Confidence in {document_type} ({confidence:.2f}%)"
+                )
+
+                risk_score += 40
+
+
+
+            # Medium confidence - only warning
+            elif confidence < 55:
+
+                # If extraction is complete, treat as warning only
+
+                if document_type == "PAN":
+
+                    if (
+                        result["extracted_name"]
+                        and result["extracted_pan"]
+                        and result["extracted_dob"]
+                    ):
+
+                        findings.append(
+                            f"PAN OCR confidence is low ({confidence:.2f}%) but all critical fields extracted."
+                        )
+
+                    else:
+
+                        findings.append(
+                            f"Low OCR Confidence in PAN ({confidence:.2f}%"
+                    )
+
+                    risk_score += 10
+
+
+            elif document_type == "AADHAAR":
+
+                if (
+                    result["extracted_name"]
+                    and result["extracted_aadhaar"]
+                    and result["extracted_dob"]
+                ):
+
+                    findings.append(
+                        f"Aadhaar OCR confidence is low ({confidence:.2f}%) but all critical fields extracted."
+                    )
+
+                else:
+
+                    findings.append(
+                        f"Low OCR Confidence in Aadhaar ({confidence:.2f}%"
+                    )
+
+                    risk_score += 10
+
+
+
+    # ---------------------------------
+    # Multiple Loan Application Check
+    # ---------------------------------
+
+    loans = get_loans_by_customer(
+        customer_id
     )
 
-    row = cursor.fetchone()
 
-    pan = row[0] if row else None
+    if len(loans) >= 3:
 
-    # ----------------------------------------
-    # Duplicate PAN Check
-    # ----------------------------------------
-
-    if pan:
-
-        cursor.execute(
-            """
-            SELECT COUNT(DISTINCT user_id)
-            FROM documents
-            WHERE extracted_number=?
-            AND user_id<>?
-            """,
-            (
-                pan,
-                state["user_id"]
-            )
+        findings.append(
+            "Customer has multiple previous loan applications."
         )
 
-        count = cursor.fetchone()[0]
+        risk_score += 30
 
-        if count > 0:
 
-            fraud = True
 
-            reasons.append(
-                "Duplicate PAN detected for another user."
-            )
+    # ---------------------------------
+    # Final Risk Calculation
+    # ---------------------------------
 
-    # ----------------------------------------
-    # Get current user's Aadhaar number
-    # ----------------------------------------
+    if risk_score >= 70:
 
-    cursor.execute(
-      """
-      SELECT extracted_number
-      FROM documents
-      WHERE user_id=?
-      AND document_type='AADHAAR'
-      """,
-      (state["user_id"],)
-    )
+        risk = "HIGH"
+        fraud = True
 
-    row = cursor.fetchone()
 
-    aadhaar = row[0] if row else None
+    elif risk_score >= 30:
 
-    # ----------------------------------------
-    # Duplicate Aadhaar Check
-    # ----------------------------------------
+        risk = "MEDIUM"
+        fraud = True
 
-    if aadhaar:
 
-        cursor.execute(
-            """
-            SELECT COUNT(DISTINCT user_id)
-            FROM documents
-            WHERE extracted_number=?
-            AND user_id<>?
-            """,
-            (
-                aadhaar,
-                state["user_id"]
-            )
-        )
-
-        count = cursor.fetchone()[0]
-
-        if count > 0:
-
-            fraud = True
-
-            reasons.append(
-            "Duplicate Aadhaar detected for another user."
-            )
-
-    # ----------------------------------------
-    # OCR Confidence Check
-    # ----------------------------------------
-
-    cursor.execute(
-        """
-        SELECT
-        document_type,
-        ocr_confidence
-        FROM documents
-        WHERE user_id=?
-        """,
-        (state["user_id"],)
-    )
-
-    rows = cursor.fetchall()
-
-    for doc_type, confidence in rows:
-
-        if confidence is not None and confidence < 70:
-
-            fraud = True
-
-            reasons.append(
-                f"Low OCR confidence in {doc_type} ({confidence}%)."
-            )
-
-    conn.close()
-
-    state["fraud"] = fraud
-
-    if reasons:
-        state["fraud_reason"] = "\n".join(reasons)
     else:
-        state["fraud_reason"] = "No fraud detected."
 
-    return state
+        risk = "LOW"
+        fraud = False
+
+
+
+    # ---------------------------------
+    # Default Message
+    # ---------------------------------
+
+    if not findings:
+
+        findings.append(
+            "No Fraud Detected"
+        )
+
+
+
+    return {
+
+        "fraud": fraud,
+
+        "risk": risk,
+
+        "risk_score": risk_score,
+
+        "reasons": findings
+
+    }

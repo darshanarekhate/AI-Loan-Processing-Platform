@@ -1,3 +1,1 @@
-from src.database import initialize_database
-
-initialize_database()
+import database.schema

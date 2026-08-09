@@ -1,0 +1,206 @@
+=========================================
+LOAN DOCUMENT REQUIREMENTS
+=========================================
+
+1. Introduction
+
+Applicants must submit valid and complete documents for identity verification, eligibility assessment, income verification, and loan processing. Missing or incorrect documents may delay approval or result in rejection.
+
+-----------------------------------------
+
+2. Mandatory Identity Documents
+
+At least one valid government-issued identity proof is required.
+
+Accepted documents include:
+
+• Aadhaar Card
+• PAN Card
+• Passport
+• Voter ID
+• Driving Licence
+
+-----------------------------------------
+
+3. Address Proof
+
+Applicants must provide a valid address proof.
+
+Accepted documents include:
+
+• Aadhaar Card
+• Passport
+• Utility Bill
+• Driving Licence
+• Bank Passbook
+• Rental Agreement (where accepted)
+
+-----------------------------------------
+
+4. PAN Card
+
+PAN Card is generally mandatory for:
+
+• Income verification
+• Tax compliance
+• High-value loans
+• Credit assessment
+
+-----------------------------------------
+
+5. Aadhaar Card
+
+Aadhaar is commonly used for:
+
+• Identity verification
+• Address verification
+• KYC processing
+
+-----------------------------------------
+
+6. Income Proof
+
+For Salaried Employees:
+
+• Last 3 Salary Slips
+• Form 16 (if applicable)
+• Salary Certificate
+
+For Self-employed Applicants:
+
+• Income Tax Returns
+• Profit & Loss Statement
+• Balance Sheet
+• Business Registration Documents
+
+-----------------------------------------
+
+7. Bank Statements
+
+Applicants are generally required to provide:
+
+• Last 6 months Bank Statements
+
+These are used to evaluate:
+
+• Salary credits
+• Income consistency
+• Existing EMIs
+• Financial behaviour
+
+-----------------------------------------
+
+8. Photographs
+
+Recent passport-size photographs may be required during application processing.
+
+-----------------------------------------
+
+9. Property Documents (Home Loan)
+
+Examples include:
+
+• Sale Agreement
+• Title Deed
+• Property Tax Receipt
+• Approved Building Plan
+• Encumbrance Certificate
+
+-----------------------------------------
+
+10. Vehicle Documents (Car Loan)
+
+Examples include:
+
+• Vehicle Quotation
+• Dealer Invoice
+• Insurance Details
+• Registration Documents
+
+-----------------------------------------
+
+11. Education Loan Documents
+
+Examples include:
+
+• Admission Letter
+• Fee Structure
+• Academic Certificates
+• Entrance Exam Scorecard
+• Co-applicant Income Proof
+
+-----------------------------------------
+
+12. KYC Documents
+
+KYC verification generally requires:
+
+• PAN Card
+• Aadhaar Card
+• Photograph
+• Address Proof
+
+-----------------------------------------
+
+13. OCR Verification
+
+Uploaded documents may undergo Optical Character Recognition (OCR).
+
+The system extracts information such as:
+
+• Name
+• PAN Number
+• Aadhaar Number
+• Date of Birth
+
+The extracted data is compared against customer records.
+
+-----------------------------------------
+
+14. Common Reasons for Document Rejection
+
+• Blurred image
+• Expired document
+• Incorrect document
+• Cropped upload
+• Mismatch in customer details
+• Illegible text
+• Fake or altered document
+
+-----------------------------------------
+
+15. Tips for Uploading Documents
+
+• Upload clear colour images
+• Avoid glare and shadows
+• Capture the complete document
+• Ensure all text is readable
+• Upload original documents only
+
+-----------------------------------------
+
+16. Frequently Asked Questions
+
+Q. Is PAN mandatory?
+
+Yes, for most loan products.
+
+Q. Is Aadhaar mandatory?
+
+It is generally required for KYC verification.
+
+Q. Can I upload scanned copies?
+
+Yes, provided they are clear and readable.
+
+Q. Can I submit documents later?
+
+Processing may begin only after the required documents are received.
+
+Q. What happens if OCR cannot read my document?
+
+The application may be sent for manual verification or the customer may be asked to upload a clearer copy.
+
+=========================================
+END OF DOCUMENT REQUIREMENTS
+=========================================

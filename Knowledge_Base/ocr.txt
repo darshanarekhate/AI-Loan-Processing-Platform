@@ -1,0 +1,195 @@
+=========================================
+OCR (OPTICAL CHARACTER RECOGNITION) GUIDE
+=========================================
+
+1. Introduction
+
+Optical Character Recognition (OCR) is a technology that converts text from scanned documents and images into machine-readable data.
+
+In the AI Loan Processing System, OCR is used to automatically extract customer information from uploaded identity documents.
+
+-----------------------------------------
+
+2. Purpose of OCR
+
+OCR helps the bank to:
+
+• Reduce manual data entry
+• Speed up document verification
+• Improve processing efficiency
+• Support KYC verification
+• Detect document inconsistencies
+
+-----------------------------------------
+
+3. Supported Documents
+
+The OCR engine can process:
+
+• PAN Card
+• Aadhaar Card
+• Passport
+• Driving Licence
+• Voter ID (where supported)
+
+-----------------------------------------
+
+4. Information Extracted
+
+Depending on the document type, OCR may extract:
+
+• Customer Name
+• PAN Number
+• Aadhaar Number
+• Date of Birth
+• Gender
+• Address
+• Document Number
+
+-----------------------------------------
+
+5. OCR Workflow
+
+Step 1:
+Customer uploads the document.
+
+Step 2:
+The image is preprocessed to improve readability.
+
+Step 3:
+OCR extracts the visible text.
+
+Step 4:
+The extracted data is structured into fields.
+
+Step 5:
+The extracted information is compared with customer records.
+
+Step 6:
+Results are sent to the KYC verification process.
+
+-----------------------------------------
+
+6. OCR Confidence Score
+
+Every extracted document receives a confidence score.
+
+Higher confidence indicates greater certainty that the extracted text is accurate.
+
+Typical interpretation:
+
+95% – 100%
+Excellent extraction.
+
+80% – 94%
+Good extraction.
+
+60% – 79%
+Acceptable but may require review.
+
+Below 60%
+Manual verification is recommended.
+
+-----------------------------------------
+
+7. Factors Affecting OCR Accuracy
+
+OCR accuracy depends on:
+
+• Image quality
+• Lighting
+• Document orientation
+• Image resolution
+• Blur
+• Shadows
+• Cropped images
+• Damaged documents
+
+-----------------------------------------
+
+8. Common OCR Errors
+
+Possible extraction issues include:
+
+• Incorrect character recognition
+• Missing characters
+• Incorrect PAN number
+• Incorrect Aadhaar number
+• Wrong Date of Birth
+• Partial text extraction
+
+-----------------------------------------
+
+9. OCR Validation
+
+The extracted information is compared with customer records.
+
+Fields commonly validated include:
+
+• Name
+• PAN Number
+• Aadhaar Number
+• Date of Birth
+
+Any mismatch may trigger manual review.
+
+-----------------------------------------
+
+10. OCR and KYC
+
+OCR is the first step in the KYC verification process.
+
+KYC uses the extracted information to determine whether customer records match the uploaded documents.
+
+-----------------------------------------
+
+11. Manual Review
+
+Applications may be sent for manual verification if:
+
+• OCR confidence is low
+• Text is unreadable
+• Multiple fields are missing
+• Significant mismatches are detected
+
+-----------------------------------------
+
+12. Best Practices for Customers
+
+For the best OCR results:
+
+• Upload high-resolution images.
+• Ensure the entire document is visible.
+• Avoid glare and reflections.
+• Keep the document flat.
+• Use original documents.
+• Do not crop important details.
+• Capture images in good lighting.
+
+-----------------------------------------
+
+13. Frequently Asked Questions
+
+Q. What is OCR?
+
+OCR converts text from images into editable and searchable digital text.
+
+Q. Why is OCR used?
+
+It reduces manual effort and speeds up document verification.
+
+Q. What does the confidence score mean?
+
+It indicates how accurately the OCR engine believes it extracted the document information.
+
+Q. Can OCR make mistakes?
+
+Yes. Poor image quality, blur, or damaged documents may reduce accuracy.
+
+Q. What happens if OCR confidence is low?
+
+The application may be sent for manual verification or the customer may be asked to upload a clearer document.
+
+=========================================
+END OF OCR GUIDE
+=========================================

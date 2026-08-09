@@ -1,166 +1,41 @@
-import sqlite3
+def verify_kyc(ocr_results):
 
-from config import DATABASE_PATH
+    pan = None
+    aadhaar = None
 
-print(">>> NEW KYC.PY LOADED <<<")
+    for result in ocr_results:
 
+        if result["document_type"] == "PAN":
+            pan = result
 
-def calculate_kyc_score(user_id):
-    """
-    Calculate KYC score using only the latest PAN and Aadhaar
-    records for the user.
-    """
+        elif result["document_type"] == "AADHAAR":
+            aadhaar = result
 
-    conn = sqlite3.connect(
-        DATABASE_PATH,
-        check_same_thread=False
+    if not pan or not aadhaar:
+
+        return {
+            "status": "FAILED",
+            "reason": "Missing PAN or Aadhaar OCR results"
+        }
+
+    name_match = (
+        pan["extracted_name"].strip().upper()
+        ==
+        aadhaar["extracted_name"].strip().upper()
     )
 
-    cursor = conn.cursor()
-
-    # --------------------------------------------------
-    # Fetch only the latest PAN and latest Aadhaar
-    # --------------------------------------------------
-
-    cursor.execute(
-        """
-        SELECT
-            document_type,
-            extracted_number,
-            name,
-            father_name,
-            dob,
-            ocr_confidence
-        FROM documents
-        WHERE id IN (
-            SELECT MAX(id)
-            FROM documents
-            WHERE user_id=?
-            GROUP BY document_type
-        )
-        """,
-        (user_id,)
+    dob_match = (
+        pan["extracted_dob"]
+        ==
+        aadhaar["extracted_dob"]
     )
 
-    documents = cursor.fetchall()
-
-    print("\n===== DOCUMENTS USED FOR KYC =====")
-    for doc in documents:
-        print(doc)
-    print("==================================\n")
-
-    conn.close()
-
-    score = 0
-
-    pan_found = False
-    aadhaar_found = False
-
-    # --------------------------------------------------
-    # Calculate Score
-    # --------------------------------------------------
-
-    for (
-        document_type,
-        extracted_number,
-        name,
-        father_name,
-        dob,
-        confidence
-    ) in documents:
-
-        # -----------------------------
-        # PAN
-        # -----------------------------
-
-        if document_type == "PAN":
-
-            pan_found = True
-
-            if extracted_number:
-                score += 25
-
-            if name:
-                score += 15
-
-            if father_name:
-                score += 10
-
-            if dob:
-                score += 10
-
-            if confidence is not None:
-
-                if confidence >= 80:
-                    score += 15
-
-                elif confidence >= 60:
-                    score += 10
-
-                elif confidence >= 40:
-                    score += 5
-
-        # -----------------------------
-        # Aadhaar
-        # -----------------------------
-
-        elif document_type == "AADHAAR":
-
-            aadhaar_found = True
-
-            if extracted_number:
-                score += 15
-
-            if name:
-                score += 10
-
-            if dob:
-                score += 10
-
-            if confidence is not None:
-
-                if confidence >= 80:
-                    score += 15
-
-                elif confidence >= 60:
-                    score += 10
-
-                elif confidence >= 40:
-                    score += 5
-
-    # --------------------------------------------------
-    # Missing Document Penalty
-    # --------------------------------------------------
-
-    if not pan_found:
-        score -= 20
-
-    if not aadhaar_found:
-        score -= 20
-
-    # --------------------------------------------------
-    # Keep score between 0 and 100
-    # --------------------------------------------------
-
-    score = max(0, min(score, 100))
-
-    # --------------------------------------------------
-    # KYC Status
-    # --------------------------------------------------
-
-    if score >= 90:
-        status = "Excellent"
-
-    elif score >= 75:
-        status = "Good"
-
-    elif score >= 60:
-        status = "Average"
-
-    else:
-        status = "Poor"
-
-    print("Final KYC Score :", score)
-    print("Final KYC Status:", status)
-
-    return score, status
+    return {
+        "pan_name": pan["extracted_name"],
+        "aadhaar_name": aadhaar["extracted_name"],
+        "pan_dob": pan["extracted_dob"],
+        "aadhaar_dob": aadhaar["extracted_dob"],
+        "name_match": name_match,
+        "dob_match": dob_match,
+        "status": "PASSED" if (name_match and dob_match) else "MANUAL REVIEW",
+    }

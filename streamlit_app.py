@@ -220,14 +220,21 @@ with tab3:
             st.stop()
 
         # ---------------------------------------
-        # OCR
+        # OCR - PAN
         # ---------------------------------------
 
         image = preprocess_image(
-            st.session_state["pan_path"]
+            st.session_state["pan_path"],
+            "PAN"
         )
 
-        text, confidence = perform_ocr(image)
+        text, confidence = perform_ocr(
+            image,
+            "PAN"
+        )
+
+        st.subheader("Raw PAN OCR")
+        st.text(text)
 
         details = extract_pan_details(text)
 
@@ -241,42 +248,42 @@ with tab3:
         )
 
         st.divider()
-
         st.subheader("📄 OCR Result")
 
         col1, col2 = st.columns(2)
 
         with col1:
             st.write("**PAN Number**")
-            st.success(details["PAN"])
+            st.success(details["PAN"] if details["PAN"] else "Not Found")
 
             st.write("**Name**")
-            st.success(details["NAME"])
+            st.success(details["NAME"] if details["NAME"] else "Not Found")
 
             st.write("**Father Name**")
-            st.success(details["FATHER"])
+            st.success(details["FATHER"] if details["FATHER"] else "Not Found")
 
         with col2:
             st.write("**Date of Birth**")
-            st.success(details["DOB"])
+            st.success(details["DOB"] if details["DOB"] else "Not Found")
 
             st.write("**OCR Confidence**")
             st.info(f"{confidence}%")
 
         # ---------------------------------------
-        # Aadhaar OCR
+        # OCR - Aadhaar
         # ---------------------------------------
 
         aadhaar_image = preprocess_image(
-            st.session_state["aadhaar_path"]
+            st.session_state["aadhaar_path"],
+            "AADHAAR"
         )
 
         aadhaar_text, aadhaar_confidence = perform_ocr(
-            aadhaar_image
+            aadhaar_image,
+            "AADHAAR"
         )
 
         st.subheader("Raw Aadhaar OCR")
-
         st.text(aadhaar_text)
 
         aadhaar_details = extract_aadhaar_details(
@@ -293,23 +300,20 @@ with tab3:
         )
 
         st.divider()
-
         st.subheader("🪪 Aadhaar OCR Result")
 
         col1, col2 = st.columns(2)
 
         with col1:
-
             st.write("**Aadhaar Number**")
-            st.success(aadhaar_details["AADHAAR"])
+            st.success(aadhaar_details["AADHAAR"] if aadhaar_details["AADHAAR"] else "Not Found")
 
             st.write("**Name**")
-            st.success(aadhaar_details["NAME"])
+            st.success(aadhaar_details["NAME"] if aadhaar_details["NAME"] else "Not Found")
 
         with col2:
-
             st.write("**Date of Birth**")
-            st.success(aadhaar_details["DOB"])
+            st.success(aadhaar_details["DOB"] if aadhaar_details["DOB"] else "Not Found")
 
             st.write("**OCR Confidence**")
             st.info(f"{aadhaar_confidence}%")
@@ -383,6 +387,43 @@ with tab3:
         else:
             st.success("No Fraud Detected")
             st.write(result["fraud_reason"])
+
+        st.divider()
+
+        st.subheader("👤 Name Matching")
+
+        col1, col2 = st.columns(2)
+
+        with col1:
+            st.write("Registered Name")
+            st.success(result["registered_name"])
+
+            st.write("PAN Name")
+            st.success(result["pan_name"])
+
+            st.write("Aadhaar Name")
+            st.success(result["aadhaar_name"])
+
+        with col2:
+            st.metric(
+            "Match Score",
+            f"{result['name_match_score']:.1f}%"
+            )
+
+            if result["name_match"]:
+                st.success("Names Matched")
+            else:
+                st.error("Name Mismatch")
+
+        st.divider()
+
+        st.subheader("📝 Manual Review")
+
+        if result["manual_review"]:
+            st.warning("Manual Review Required")
+            st.write(result["review_reason"])
+        else:
+            st.success("No Manual Review Required")
 
         # ----------------------------
         # AI Decision

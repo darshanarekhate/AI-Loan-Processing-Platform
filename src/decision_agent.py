@@ -1,56 +1,83 @@
-from langchain_groq import ChatGroq
-from config import GROQ_API_KEY
+from langchain_google_genai import ChatGoogleGenerativeAI
 
-llm = ChatGroq(
-    model="llama-3.3-70b-versatile",
-    api_key=GROQ_API_KEY,
-    temperature=0
+from config import GEMINI_API_KEY
+
+
+llm = ChatGoogleGenerativeAI(
+    model="gemini-2.5-flash",
+    google_api_key=GEMINI_API_KEY,
+    temperature=0,
 )
 
 
-def ai_decision(state):
+def ai_decision(
+    customer_id,
+    application_id,
+    kyc_status,
+    fraud_status,
+    fraud_reason,
+    credit_score,
+    monthly_income,
+    loan_amount,
+):
 
     prompt = f"""
-You are an experienced bank loan approval officer.
+You are a Senior Bank Loan Approval Officer.
 
-Applicant Information
+Applicant Details
 
-User ID:
-{state["user_id"]}
+Customer ID:
+{customer_id}
 
-Documents Uploaded:
-{state["documents_uploaded"]}
+Application ID:
+{application_id}
 
-OCR Completed:
-{state["ocr_completed"]}
+Credit Score:
+{credit_score}
 
-KYC Score:
-{state["kyc_score"]}
+Monthly Income:
+₹{monthly_income:,.0f}
+
+Requested Loan Amount:
+₹{loan_amount:,.0f}
 
 KYC Status:
-{state["kyc_status"]}
+{kyc_status}
 
-Fraud Detected:
-{state["fraud"]}
+Fraud Status:
+{fraud_status}
 
 Fraud Reason:
-{state["fraud_reason"]}
+{fraud_reason}
 
 Rules
 
-1. If fraud is detected, REJECT the loan immediately.
+1. If Fraud Status is HIGH
+Decision = REJECTED
 
-2. Otherwise, if the KYC score is 80 or above, APPROVE the loan.
+2. Else if KYC Status is MANUAL REVIEW
+Decision = MANUAL REVIEW
 
-3. Otherwise, REJECT the loan.
+3. Else if Credit Score >= 750
+Decision = APPROVED
+
+4. Else if Credit Score between 650 and 749
+Decision = MANUAL REVIEW
+
+5. Else
+Decision = REJECTED
 
 Return ONLY in this format.
 
 Decision:
-APPROVED or REJECTED
+APPROVED
+or
+REJECTED
+or
+MANUAL REVIEW
 
 Explanation:
-<Explain the reason clearly in 3-5 sentences>
+Explain in 3-5 short sentences.
 """
 
     response = llm.invoke(prompt)

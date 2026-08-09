@@ -1,57 +1,105 @@
 import cv2
 import sqlite3
 import re
+from matplotlib import lines
 import pytesseract
 
 from pytesseract import Output
 
 from config import DATABASE_PATH
 from config import TESSERACT_PATH
+from src.easyocr_reader import perform_easyocr
 
 pytesseract.pytesseract.tesseract_cmd = TESSERACT_PATH
 
 
-def perform_ocr(image):
+def perform_ocr(image, document_type="PAN"):
 
-    config="--oem 3 --psm 6"
+    if document_type == "AADHAAR":
+        configs = [
+            "--oem 3 --psm 6",
+            "--oem 3 --psm 4"
+        ]
+    else:
+        configs = [
+            "--oem 3 --psm 6",
+            "--oem 3 --psm 11"
+        ]
 
-    text=pytesseract.image_to_string(
+    best_text = ""
+    best_conf = 0.0
 
-        image,
+    for config in configs:
 
-        config=config
+        print(f"Running OCR with {config}")
 
-    )
+        print("Image Shape:", image.shape)
+        print("Image Type:", image.dtype)
 
-    data=pytesseract.image_to_data(
+        print("Before image_to_string")
 
-        image,
+        text = pytesseract.image_to_string(
+            image,
+            lang="eng",
+            config=config,
+            timeout=20
+        )
 
-        output_type=Output.DICT,
+        print("After image_to_string")
 
-        config=config
+        data = pytesseract.image_to_data(
+            image,
+            lang="eng",
+            output_type=Output.DICT,
+            config=config
+        )
 
-    )
+        confidences = []
 
-    conf=[]
+        for c in data["conf"]:
+            try:
+                c = float(c)
+                if c > 0:
+                    confidences.append(c)
+            except ValueError:
+                pass
 
-    for c in data["conf"]:
+        avg_conf = round(
+            sum(confidences) / len(confidences),
+            2
+        ) if confidences else 0.0
 
-        try:
+        print(f"PSM: {config} -> Confidence: {avg_conf}")
 
-            c=float(c)
+        # Exit early if confidence is excellent
+        if avg_conf >= 70:
+            print("High confidence achieved. Skipping remaining configs.")
+            best_text = text
+            best_conf = avg_conf
+            break
 
-            if c>0:
+        # Keep best result
+        if avg_conf > best_conf:
+            best_conf = avg_conf
+            best_text = text
 
-                conf.append(c)
+    print("Best Tesseract Confidence:", best_conf)
 
-        except:
+    # EasyOCR fallback threshold
+    threshold = 50 if document_type == "AADHAAR" else 60
 
-            pass
+    if best_conf < threshold:
 
-    avg=round(sum(conf)/len(conf),2) if conf else 0
+        print("Trying EasyOCR...")
 
-    return text,avg
+        easy_text, easy_conf = perform_easyocr(image)
+
+        print("EasyOCR Confidence:", easy_conf)
+
+        if easy_conf > best_conf:
+            return easy_text, easy_conf
+
+    return best_text, best_conf
 
 def extract_pan_details(ocr_text):
 
@@ -80,20 +128,52 @@ def extract_pan_details(ocr_text):
     # Extract DOB
     # ------------------------------------
 
-    dob_pattern = r"\d{2}/\d{2}/\d{4}"
+    dob = None
+
+    dob_patterns = [
+        r"\d{2}/\d{2}/\d{4}",
+        r"\d{2}-\d{2}-\d{4}",
+        r"\d{2}\.\d{2}\.\d{4}"
+    ]
 
     for line in lines:
+        for pattern in dob_patterns:
+            match = re.search(pattern, line)
+            if match:
+                dob = match.group()
+                break
 
-        match = re.search(dob_pattern, line)
-
-        if match:
-            dob = match.group()
+        if dob:
             break
 
     # ------------------------------------
-    # Extract Name
-    # (Next line after PAN Number)
+    # Extract Father's Name
     # ------------------------------------
+    
+    for i, line in enumerate(lines):
+    
+        if "FATHER" in line.upper():
+    
+            if i + 1 < len(lines):
+    
+                candidate = lines[i + 1]
+    
+                candidate = re.sub(r'[^A-Za-z ]', ' ', candidate)
+    
+                candidate = re.sub(r'\s+', ' ', candidate).strip()
+    
+                words = [w for w in candidate.split() if w.isupper()]
+    
+                if len(words) >= 2:
+                        father_name = " ".join(words)
+    
+            break
+
+    # ------------------------------------
+    # Extract Applicant Name
+    # ------------------------------------
+
+    name = None
 
     if pan_number:
 
@@ -101,53 +181,67 @@ def extract_pan_details(ocr_text):
 
             if pan_number in line.upper():
 
-                if i + 1 < len(lines):
+                # Look at the next 5 lines after PAN number
+                for j in range(i + 1, min(i + 6, len(lines))):
 
-                    candidate = lines[i + 1]
+                    candidate = re.sub(r"[^A-Za-z ]", "", lines[j]).strip().upper()
 
-                    # Remove symbols
-                    candidate = re.sub(r'[^A-Za-z ]', ' ', candidate)
+                    words = candidate.split()
 
-                    candidate = re.sub(r'\s+', ' ', candidate).strip()
+                    if len(words) < 2:
+                        continue
 
-                    # Keep only fully uppercase words
-                    words = [w for w in candidate.split() if w.isupper()]
+                    ignore = [
+                        "INCOME",
+                        "TAX",
+                        "DEPARTMENT",
+                        "GOVT",
+                        "GOVERNMENT",
+                        "INDIA",
+                        "PERMANENT",
+                        "ACCOUNT",
+                        "NUMBER",
+                        "CARD",
+                        "NAME",
+                        "FATHER",
+                        "DATE",
+                        "BIRTH",
+                        "SIGNATURE"
+                    ]
 
-                    # Stop if OCR starts adding lowercase/noise
-                    clean_words = []
-                    for w in words:
-                        if len(w) >= 2:
-                            clean_words.append(w)
-                        else:
+                    if any(word in ignore for word in words):
+                        continue
+
+                    # First valid uppercase line is applicant name
+                    if all(word.isalpha() for word in words):
+
+                        clean_words = []
+
+                        for word in words:
+
+                            # Stop when OCR starts producing noisy words
+                            if len(word) < 2:
+                                break
+
+                            if word in [
+                                "DC",
+                                "OS",
+                                "SEERS",
+                                "SIGNATURE",
+                                "DATE",
+                                "BIRTH",
+                                "FATHER",
+                                "NAME"
+                            ]:
+                                break
+
+                            clean_words.append(word)
+
+                        if len(clean_words) >= 2:
+                            name = " ".join(clean_words)
                             break
 
-                    if len(clean_words) >= 2:
-                        name = " ".join(clean_words[:2])
-
                 break
-
-    # ------------------------------------
-    # Extract Father's Name
-    # ------------------------------------
-
-    for i, line in enumerate(lines):
-
-        if "FATHER" in line.upper():
-
-            if i + 1 < len(lines):
-
-                candidate = lines[i + 1]
-
-                candidate = re.sub(r'[^A-Za-z ]', ' ', candidate)
-
-                candidate = re.sub(r'\s+', ' ', candidate).strip()
-
-                words = [w for w in candidate.split() if w.isupper()]
-
-                if len(words) >= 2:
-                    father_name = " ".join(words)
-
-            break
 
     return {
 
@@ -201,19 +295,21 @@ def save_ocr_result(
 
 def extract_aadhaar_details(ocr_text):
 
-    import re
-
-    lines = [line.strip() for line in ocr_text.split("\n") if line.strip()]
+    lines = [
+        re.sub(r"\s+", " ", line).strip()
+        for line in ocr_text.split("\n")
+        if line.strip()
+    ]
 
     aadhaar = None
-    name = None
     dob = None
+    name = None
 
-    # -----------------------------------
+    # ------------------------------------
     # Aadhaar Number
-    # -----------------------------------
+    # ------------------------------------
 
-    aadhaar_pattern = r"\d{4}\s?\d{4}\s?\d{4}"
+    aadhaar_pattern = r"(?:\d{4}\s?){2}\d{4}"
 
     for line in lines:
 
@@ -222,47 +318,156 @@ def extract_aadhaar_details(ocr_text):
         if match:
 
             aadhaar = match.group().replace(" ", "")
-
             break
 
-    # -----------------------------------
+    # ------------------------------------
     # DOB
-    # -----------------------------------
+    # ------------------------------------
 
-    dob_pattern = r"\d{2}/\d{2}/\d{4}"
+    dob_patterns = [
+        r"\d{2}/\d{2}/\d{4}",
+        r"\d{2}-\d{2}-\d{4}",
+        r"\d{2}\.\d{2}\.\d{4}"
+    ]
 
-    for line in lines:
+    dob_index = -1
 
-        match = re.search(dob_pattern, line)
+    for i, line in enumerate(lines):
 
-        if match:
+        for pattern in dob_patterns:
 
-            dob = match.group()
+            match = re.search(pattern, line)
 
+            if match:
+
+                dob = match.group()
+                dob_index = i
+                break
+
+        if dob:
             break
 
-    # -----------------------------------
-    # Name
-    # -----------------------------------
+    # ------------------------------------
+    # Find Name Near DOB
+    # ------------------------------------
 
-    for line in lines:
+    ignore_words = {
 
-        line = re.sub(r"[^A-Za-z ]", "", line).strip()
+        "GOVERNMENT",
+        "INDIA",
+        "UIDAI",
+        "UNIQUE",
+        "IDENTIFICATION",
+        "AUTHORITY",
+        "AADHAAR",
+        "ADDRESS",
+        "MALE",
+        "FEMALE",
+        "DOB",
+        "YEAR",
+        "BIRTH",
+        "PROOF",
+        "IDENTITY",
+        "CITIZENSHIP",
+        "ONLINE",
+        "AUTHENTICATION",
+        "QR",
+        "CODE",
+        "XML"
 
-        words = line.split()
+    }
 
-        if len(words) >= 2:
+    candidates = []
 
-            if all(word.isupper() for word in words):
+    if dob_index != -1:
 
-                if "GOVERNMENT" not in line and "INDIA" not in line:
+        start = max(0, dob_index - 3)
 
-                    name = line
+        for i in range(start, dob_index):
 
-                    break
+            candidate = lines[i]
+
+            candidate = re.sub(
+                r"[^A-Za-z ]",
+                " ",
+                candidate
+            )
+
+            candidate = re.sub(
+                r"\s+",
+                " ",
+                candidate
+            ).strip()
+
+            if len(candidate) < 4:
+                continue
+
+            upper = candidate.upper()
+
+            if any(word in upper for word in ignore_words):
+                continue
+
+            words = candidate.split()
+
+            # Aadhaar names normally contain 2-3 words
+            if len(words) < 2 or len(words) > 4:
+                continue
+
+            clean_words = []
+
+            for word in words:
+
+                if len(word) < 2:
+                    continue
+
+                # Ignore OCR garbage
+                if not word.isalpha():
+                    continue
+
+                clean_words.append(word)
+
+            if len(clean_words) >= 2:
+
+                # Remove suspicious trailing OCR fragment
+                if (
+                    len(clean_words) >= 3
+                    and len(clean_words[-1]) <= 2
+                ):
+                    clean_words = clean_words[:-1]
+
+                candidate = " ".join(clean_words)
+
+                score = 0
+
+                score += 10 - (dob_index - i)
+
+                if 2 <= len(clean_words) <= 3:
+                    score += 5
+
+                if all(2 <= len(w) <= 12 for w in clean_words):
+                    score += 3
+
+                candidates.append(
+                    (
+                        score,
+                        candidate
+                    )
+                )
+
+    if candidates:
+
+        candidates.sort(
+            reverse=True
+        )
+
+        name = candidates[0][1].title()
 
     return {
-        "AADHAAR": aadhaar,
-        "NAME": name,
-        "DOB": dob
+
+        "AADHAAR": aadhaar if aadhaar else "Not Found",
+
+        "NAME": name if name else "Not Found",
+
+        "DOB": dob if dob else "Not Found"
+
     }

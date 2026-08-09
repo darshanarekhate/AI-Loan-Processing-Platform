@@ -1,0 +1,229 @@
+=========================================
+LOAN ELIGIBILITY GUIDELINES
+=========================================
+
+1. Introduction
+
+Loan eligibility determines whether a customer qualifies for a loan based on financial, personal, and regulatory criteria. Every loan application undergoes an eligibility assessment before approval.
+
+-----------------------------------------
+
+2. Basic Eligibility
+
+Applicants should:
+
+• Be an Indian citizen (unless specific NRI products apply)
+• Meet the minimum age requirement
+• Have a stable source of income
+• Complete KYC verification
+• Meet the bank's credit policy
+
+-----------------------------------------
+
+3. Minimum Age
+
+Most loan products require:
+
+Minimum Age:
+21 Years
+
+Some education loans may allow applicants below 18 years with a parent or guardian as co-applicant.
+
+-----------------------------------------
+
+4. Maximum Age
+
+Maximum age at loan maturity generally ranges between:
+
+65 to 70 years
+
+depending on the loan product.
+
+-----------------------------------------
+
+5. Employment Categories
+
+Eligible applicants may include:
+
+• Salaried Employees
+• Government Employees
+• Private Sector Employees
+• Self-employed Professionals
+• Business Owners
+• Pensioners (for selected products)
+
+-----------------------------------------
+
+6. Income Requirement
+
+Minimum income depends on the loan product.
+
+Examples:
+
+Home Loan:
+₹25,000 per month
+
+Personal Loan:
+₹20,000 per month
+
+Higher income generally increases loan eligibility.
+
+-----------------------------------------
+
+7. Credit Score
+
+Credit score plays an important role in loan approval.
+
+Typical guidelines:
+
+750 and above:
+Excellent
+
+700–749:
+Good
+
+650–699:
+Fair
+
+Below 650:
+May require manual review or may be declined depending on bank policy.
+
+-----------------------------------------
+
+8. Existing Loan Obligations
+
+The bank evaluates:
+
+• Existing EMIs
+• Outstanding loans
+• Credit card dues
+• Debt-to-income ratio
+
+Higher liabilities may reduce loan eligibility.
+
+-----------------------------------------
+
+9. Employment Stability
+
+Applicants with stable employment and consistent income generally have stronger eligibility.
+
+The bank may consider:
+
+• Employer profile
+• Years of service
+• Business stability
+• Income consistency
+
+-----------------------------------------
+
+10. Required Documents
+
+Eligibility assessment normally requires:
+
+• PAN Card
+• Aadhaar Card
+• Address Proof
+• Income Proof
+• Bank Statements
+• Passport-size Photograph
+
+Additional documents may be requested depending on the loan type.
+
+-----------------------------------------
+
+11. KYC Verification
+
+Successful KYC verification is mandatory before loan approval.
+
+Applications with failed or incomplete KYC may proceed to manual review or be rejected.
+
+-----------------------------------------
+
+12. OCR Validation
+
+Uploaded documents are processed using OCR.
+
+The extracted details are compared with customer records to identify mismatches.
+
+-----------------------------------------
+
+13. Fraud Assessment
+
+Fraud detection checks for suspicious activities such as:
+
+• Forged documents
+• Identity mismatch
+• Duplicate applications
+• High-risk patterns
+
+High fraud risk may result in rejection or manual review.
+
+-----------------------------------------
+
+14. AI Loan Assessment
+
+The AI-assisted decision engine evaluates:
+
+• Credit score
+• Income
+• KYC results
+• OCR results
+• Fraud analysis
+• Internal policy rules
+
+The AI recommendation supports the final lending decision.
+
+-----------------------------------------
+
+15. Reasons for Ineligibility
+
+Applicants may be considered ineligible due to:
+
+• Low credit score
+• Insufficient income
+• High existing debt
+• Failed KYC
+• Fraud indicators
+• Incomplete documentation
+• Invalid identity documents
+
+-----------------------------------------
+
+16. Improving Eligibility
+
+Applicants may improve eligibility by:
+
+• Maintaining a good credit score
+• Paying EMIs on time
+• Reducing outstanding debt
+• Providing accurate documents
+• Completing KYC successfully
+• Maintaining stable employment
+
+-----------------------------------------
+
+17. Frequently Asked Questions
+
+Q. Does a higher salary improve eligibility?
+
+Yes. Higher and stable income generally improves repayment capacity.
+
+Q. Can I apply with a low credit score?
+
+Yes, but the application may require manual review and additional verification.
+
+Q. Can self-employed applicants apply?
+
+Yes, subject to income and document verification.
+
+Q. Does successful KYC guarantee loan approval?
+
+No. KYC is only one part of the overall eligibility assessment.
+
+Q. Does AI make the final approval decision?
+
+No. AI provides a recommendation that supports the bank's lending process.
+
+=========================================
+END OF ELIGIBILITY GUIDELINES
+=========================================

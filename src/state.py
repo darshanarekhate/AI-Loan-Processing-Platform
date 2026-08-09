@@ -38,3 +38,17 @@ class LoanState(TypedDict):
     fraud: bool
 
     fraud_reason: str
+
+    name_match: bool
+
+    name_match_score: float
+
+    registered_name: str
+
+    pan_name: str
+
+    aadhaar_name: str
+
+    manual_review: bool
+
+    review_reason: str

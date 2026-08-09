@@ -1,0 +1,178 @@
+=========================================
+FRAUD DETECTION AND RISK ASSESSMENT GUIDE
+=========================================
+
+1. Introduction
+
+Fraud detection is an important part of the loan approval process. The bank evaluates every loan application for suspicious activity before making a lending decision.
+
+The objective is to protect customers, reduce financial risk, and comply with regulatory requirements.
+
+-----------------------------------------
+
+2. Purpose of Fraud Detection
+
+Fraud analysis helps to:
+
+• Identify suspicious applications
+• Detect forged or altered documents
+• Prevent identity theft
+• Reduce financial losses
+• Support regulatory compliance
+
+-----------------------------------------
+
+3. Fraud Assessment Process
+
+The fraud detection process may include:
+
+• Document verification
+• OCR validation
+• KYC verification
+• Identity consistency checks
+• Duplicate application detection
+• Risk rule evaluation
+
+The results contribute to the overall loan assessment.
+
+-----------------------------------------
+
+4. Fraud Status
+
+Typical fraud outcomes include:
+
+NO_FRAUD
+
+No suspicious activity was detected.
+
+POTENTIAL_FRAUD
+
+Some indicators require additional investigation.
+
+FRAUD_CONFIRMED
+
+The application contains confirmed fraudulent indicators and is likely to be rejected.
+
+-----------------------------------------
+
+5. Risk Levels
+
+LOW
+
+Minimal fraud indicators.
+
+MEDIUM
+
+Some unusual patterns were detected. Manual review may be required.
+
+HIGH
+
+Strong fraud indicators are present. Additional verification is required before any lending decision.
+
+-----------------------------------------
+
+6. Fraud Score
+
+The fraud score represents the likelihood that an application contains fraudulent activity.
+
+General interpretation:
+
+0 – 20
+Very Low Risk
+
+21 – 40
+Low Risk
+
+41 – 60
+Medium Risk
+
+61 – 80
+High Risk
+
+81 – 100
+Very High Risk
+
+A lower fraud score generally indicates lower fraud risk.
+
+-----------------------------------------
+
+7. Common Fraud Indicators
+
+Examples include:
+
+• Identity mismatch
+• PAN mismatch
+• Aadhaar mismatch
+• Fake documents
+• Altered documents
+• Duplicate applications
+• Suspicious income information
+• Invalid identity details
+• Multiple failed verification attempts
+
+-----------------------------------------
+
+8. Relationship with KYC
+
+Fraud detection uses KYC verification results as one of its inputs.
+
+Successful KYC reduces fraud risk but does not guarantee approval.
+
+-----------------------------------------
+
+9. Relationship with OCR
+
+OCR helps extract document information.
+
+If OCR detects inconsistent information or low-confidence extraction, additional fraud checks may be performed.
+
+-----------------------------------------
+
+10. Manual Review
+
+Applications may be referred for manual review when:
+
+• Medium fraud risk is detected
+• Information is inconsistent
+• Documents require additional verification
+• Automated checks are inconclusive
+
+-----------------------------------------
+
+11. Customer Recommendations
+
+Customers should:
+
+• Submit genuine documents
+• Ensure all information is accurate
+• Avoid duplicate applications
+• Upload clear images
+• Complete KYC successfully
+
+-----------------------------------------
+
+12. Frequently Asked Questions
+
+Q. What does NO_FRAUD mean?
+
+No suspicious activity was detected during the fraud assessment.
+
+Q. Does a low fraud score guarantee loan approval?
+
+No. Fraud analysis is only one part of the overall loan evaluation.
+
+Q. Why was my application sent for manual review?
+
+Manual review may occur when verification results are inconclusive or additional checks are required.
+
+Q. Can OCR errors increase fraud risk?
+
+Poor-quality documents or incorrect OCR extraction may lead to additional verification, but they do not automatically indicate fraud.
+
+Q. Is fraud detection fully automated?
+
+The system performs automated checks, but bank officers may conduct manual reviews when necessary.
+
+=========================================
+END OF FRAUD DETECTION GUIDE
+=========================================

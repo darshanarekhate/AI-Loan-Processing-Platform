@@ -1,0 +1,159 @@
+=========================================
+AI LOAN DECISION ENGINE GUIDE
+=========================================
+
+1. Introduction
+
+The AI Loan Decision Engine assists the bank in evaluating loan applications by analyzing customer information, verification results, financial data, and risk indicators.
+
+The AI provides a recommendation to support lending decisions. The final approval or rejection is made according to the bank's policies and review process.
+
+-----------------------------------------
+
+2. Purpose
+
+The AI decision engine helps to:
+
+• Improve consistency in loan evaluation
+• Reduce manual effort
+• Speed up application processing
+• Support risk assessment
+• Assist bank officers in decision-making
+
+-----------------------------------------
+
+3. Information Evaluated
+
+The AI considers multiple inputs, including:
+
+• Customer profile
+• Loan application details
+• Credit score
+• Monthly income
+• Existing financial obligations (if available)
+• OCR results
+• KYC verification
+• Fraud assessment
+• Internal lending policies
+
+-----------------------------------------
+
+4. Possible Recommendations
+
+APPROVED
+
+The application satisfies the bank's lending criteria.
+
+MANUAL REVIEW
+
+Additional verification is required before a final decision.
+
+REJECTED
+
+The application does not meet one or more lending requirements.
+
+-----------------------------------------
+
+5. Factors That Support Approval
+
+Applications are more likely to be recommended for approval when they have:
+
+• Strong credit score
+• Stable income
+• Successful KYC verification
+• Accurate OCR extraction
+• Low fraud risk
+• Complete documentation
+
+-----------------------------------------
+
+6. Factors That May Require Manual Review
+
+Examples include:
+
+• Minor KYC mismatches
+• Low OCR confidence
+• Medium fraud risk
+• Missing supporting documents
+• Borderline credit score
+• Inconsistent customer information
+
+-----------------------------------------
+
+7. Factors That May Lead to Rejection
+
+Examples include:
+
+• Very low credit score
+• Failed KYC verification
+• High fraud risk
+• Forged or invalid documents
+• Insufficient income
+• Serious identity mismatches
+
+-----------------------------------------
+
+8. Relationship with Other Modules
+
+The AI decision engine uses outputs from:
+
+• OCR Module
+• KYC Verification
+• Fraud Detection
+• Customer Database
+• Loan Application Records
+
+These components provide supporting information for the recommendation.
+
+-----------------------------------------
+
+9. Human Oversight
+
+AI recommendations assist the lending process but do not replace human judgment.
+
+Bank officers may:
+
+• Approve the recommendation
+• Request additional verification
+• Override the recommendation when justified
+• Reject an application based on policy
+
+-----------------------------------------
+
+10. Benefits
+
+The AI decision engine provides:
+
+• Faster processing
+• Consistent evaluations
+• Reduced manual workload
+• Better risk identification
+• Improved customer experience
+
+-----------------------------------------
+
+11. Frequently Asked Questions
+
+Q. Does the AI automatically approve loans?
+
+No. The AI provides a recommendation that supports the bank's decision-making process.
+
+Q. Can a recommendation change?
+
+Yes. Additional documents, updated information, or manual review may change the final outcome.
+
+Q. Why was my application marked for manual review?
+
+Manual review is used when additional verification is needed before a decision can be made.
+
+Q. Does a good credit score guarantee approval?
+
+No. Credit score is important, but the bank also considers income, KYC, fraud analysis, documentation, and policy requirements.
+
+Q. Can a bank officer override the AI recommendation?
+
+Yes. Human reviewers can make the final decision based on policy and supporting evidence.
+
+=========================================
+END OF AI LOAN DECISION ENGINE GUIDE
+=========================================

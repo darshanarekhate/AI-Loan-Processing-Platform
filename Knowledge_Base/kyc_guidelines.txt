@@ -1,0 +1,24 @@
+AI KYC Guidelines
+
+The following identity documents are accepted:
+
+- PAN Card
+- Aadhaar Card
+
+Verification checks include:
+
+- Name Match
+- PAN Match
+- Aadhaar Match
+- Date of Birth Match
+
+Verification Score
+
+100%
+Verified
+
+70–99%
+Partial Verification
+
+Below 70%
+Manual Review

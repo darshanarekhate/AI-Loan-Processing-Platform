@@ -6,6 +6,8 @@ from config import DATABASE_PATH
 from src.state import LoanState
 from src.decision_agent import ai_decision
 from src.fraud_agent import fraud_check
+from src.name_match import name_match_node
+from src.review import review_check
 
 # =====================================================
 # Database Connection
@@ -126,15 +128,29 @@ def loan_node(state):
 
     print(result)
 
-    if "APPROVED" in result.upper():
-        state["loan_status"] = "APPROVED"
-    else:
-        state["loan_status"] = "REJECTED"
+    # ---------------------------------
+    # Extract Decision Safely
+    # ---------------------------------
 
+    decision = "REJECTED"
+
+    lines = result.splitlines()
+
+    for i, line in enumerate(lines):
+
+        if line.strip().upper() == "DECISION:":
+
+            if i + 1 < len(lines):
+
+                decision = lines[i + 1].strip().upper()
+
+            break
+
+    state["loan_status"] = decision
+    state["decision"] = decision
     state["explanation"] = result
 
     return state
-
 
 # =====================================================
 # Build Workflow
@@ -145,15 +161,20 @@ graph = StateGraph(LoanState)
 graph.add_node("Login", login_node)
 graph.add_node("Documents", document_node)
 graph.add_node("OCR", ocr_node)
+graph.add_node("Name Match", name_match_node)
 graph.add_node("KYC", kyc_node)
-graph.add_node("Loan", loan_node)
 graph.add_node("Fraud",fraud_check)
+graph.add_node("Review", review_check)
+graph.add_node("Loan", loan_node)
+
 
 graph.add_edge(START, "Login")
 graph.add_edge("Login", "Documents")
 graph.add_edge("Documents", "OCR")
-graph.add_edge("OCR", "Fraud")
-graph.add_edge("Fraud", "KYC")
+graph.add_edge("OCR", "Name Match")
+graph.add_edge("Name Match", "Fraud")
+graph.add_edge("Fraud", "Review")
+graph.add_edge("Review", "KYC")
 graph.add_edge("KYC", "Loan")
 graph.add_edge("Loan", END)
 

@@ -1,0 +1,255 @@
+=========================================
+KYC (KNOW YOUR CUSTOMER) GUIDE
+=========================================
+
+1. Introduction
+
+Know Your Customer (KYC) is a mandatory verification process used by banks and financial institutions to verify the identity of customers before providing financial services.
+
+KYC helps prevent:
+
+• Identity theft
+• Money laundering
+• Financial fraud
+• Terrorist financing
+• Fake loan applications
+
+-----------------------------------------
+
+2. Objectives of KYC
+
+The KYC process aims to:
+
+• Verify customer identity
+• Verify customer address
+• Confirm date of birth
+• Validate government-issued documents
+• Prevent fraudulent applications
+• Comply with regulatory requirements
+
+-----------------------------------------
+
+3. Required KYC Documents
+
+Customers may be required to provide:
+
+• PAN Card
+• Aadhaar Card
+• Passport
+• Voter ID
+• Driving Licence
+• Passport-size Photograph
+• Address Proof
+
+-----------------------------------------
+
+4. Information Verified
+
+The bank verifies:
+
+• Customer Name
+• Date of Birth
+• PAN Number
+• Aadhaar Number
+• Residential Address
+• Photograph
+• Signature (where applicable)
+
+-----------------------------------------
+
+5. OCR Verification
+
+Uploaded documents are processed using Optical Character Recognition (OCR).
+
+The OCR system extracts:
+
+• Name
+• PAN Number
+• Aadhaar Number
+• Date of Birth
+
+The extracted information is compared with customer records.
+
+-----------------------------------------
+
+6. Matching Process
+
+The KYC engine compares:
+
+• Customer Name
+• PAN Number
+• Aadhaar Number
+• Date of Birth
+
+Each field is checked independently.
+
+-----------------------------------------
+
+7. Verification Status
+
+Possible KYC outcomes include:
+
+VERIFIED
+
+All required fields match successfully.
+
+-----------------------------------------
+
+MANUAL REVIEW
+
+One or more fields require human verification.
+
+Common reasons include:
+
+• OCR extraction errors
+• Minor spelling differences
+• Low OCR confidence
+• Partial document visibility
+
+-----------------------------------------
+
+FAILED
+
+Verification cannot be completed.
+
+Possible reasons include:
+
+• Invalid PAN
+• Invalid Aadhaar
+• Major document mismatch
+• Fake document
+• Missing mandatory information
+
+-----------------------------------------
+
+8. Similarity Score
+
+The similarity score measures how closely the extracted document information matches the customer records.
+
+Example:
+
+100%
+
+Perfect match.
+
+95%
+
+Very high match.
+
+80%
+
+Requires review.
+
+Below acceptable threshold
+
+Manual verification may be required.
+
+-----------------------------------------
+
+9. Name Matching
+
+The system ignores minor formatting differences such as:
+
+MOHAMED FAIZ
+
+vs
+
+Mohamed Faiz
+
+However, significant spelling differences may require manual review.
+
+-----------------------------------------
+
+10. PAN Verification
+
+PAN verification confirms:
+
+• Correct PAN format
+• Matching PAN number
+• Consistency with customer records
+
+Incorrect PAN details may delay loan approval.
+
+-----------------------------------------
+
+11. Aadhaar Verification
+
+The Aadhaar number is checked for:
+
+• Correct format
+• Matching customer records
+• OCR accuracy
+
+Any mismatch may trigger manual verification.
+
+-----------------------------------------
+
+12. Date of Birth Verification
+
+The Date of Birth extracted from uploaded documents is compared with the customer profile.
+
+Any mismatch requires investigation before loan approval.
+
+-----------------------------------------
+
+13. Manual Review
+
+Applications may be sent for manual review when:
+
+• OCR confidence is low
+• Document quality is poor
+• Customer information partially matches
+• Multiple documents contain inconsistent information
+
+-----------------------------------------
+
+14. Common Reasons for KYC Failure
+
+• Incorrect PAN
+• Incorrect Aadhaar
+• Wrong Date of Birth
+• Name mismatch
+• Expired document
+• Fake document
+• Unreadable upload
+• Missing mandatory document
+
+-----------------------------------------
+
+15. Customer Recommendations
+
+Customers should:
+
+• Upload clear images
+• Use valid government documents
+• Avoid cropped images
+• Ensure all information is readable
+• Verify details before submission
+
+-----------------------------------------
+
+16. Frequently Asked Questions
+
+Q. What does VERIFIED mean?
+
+All mandatory customer details match successfully.
+
+Q. What does MANUAL REVIEW mean?
+
+The application requires verification by a bank officer before processing continues.
+
+Q. Does MANUAL REVIEW mean my loan is rejected?
+
+No. It simply means additional verification is required.
+
+Q. Why is OCR confidence important?
+
+Low OCR confidence may result in incorrect extraction and require manual verification.
+
+Q. Can I upload a clearer document if verification fails?
+
+Yes. Customers may be requested to upload a better-quality document.
+
+=========================================
+END OF KYC GUIDE
+=========================================

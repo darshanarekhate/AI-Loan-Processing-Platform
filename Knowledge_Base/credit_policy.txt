@@ -1,0 +1,17 @@
+AI Credit Policy
+
+Credit Score >= 750
+Approved
+
+650–749
+Manual Review
+
+Below 650
+Rejected
+
+Other factors include:
+
+- Fraud status
+- KYC status
+- Monthly income
+- Loan amount
