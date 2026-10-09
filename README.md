@@ -1,797 +1,200 @@
 # 🤖 AI Loan Processing System
 
-An end-to-end **AI-powered loan processing platform** that combines traditional loan-processing workflows with **Generative AI, LangChain, RAG, FAISS, OCR, KYC verification, fraud detection, AI-based decisioning, and Model Context Protocol (MCP)**.
+An end-to-end **AI-assisted loan processing platform**: customer onboarding,
+document OCR, KYC verification, fraud screening, an **explainable rule-based
+credit decision**, PDF reports, dashboards and a conversational
+**AI Loan Assistant** built with **LangGraph, RAG (FAISS) and the Model
+Context Protocol (MCP)**.
 
-The system is designed to demonstrate how modern AI technologies can be integrated into a financial-services workflow to automate document processing, customer verification, risk analysis, loan decisions, and policy-based customer assistance.
-
----
-
-## 🚀 Project Overview
-
-The **AI Loan Processing System** simulates a complete digital loan-processing journey:
-
-```text
-Customer
-   │
-   ▼
-Customer Registration
-   │
-   ▼
-Loan Application
-   │
-   ▼
-Document Upload
-   │
-   ▼
-OCR Processing
-   │
-   ▼
-KYC Verification
-   │
-   ▼
-Fraud Detection
-   │
-   ▼
-AI Loan Decision
-   │
-   ▼
-Loan Report / Dashboard
-   │
-   ▼
-AI Loan Assistant
-   │
-   ├── RAG / Knowledge Base
-   └── MCP Loan Policy Tools
-```
-
-The application also provides an AI Loan Assistant that can answer questions about a customer's loan application and retrieve relevant loan-policy information.
+> Educational / portfolio project — not a production lending system.
 
 ---
 
-# ✨ Key Features
+## ✨ Highlights
 
-## 🧑 Customer Management
-
-* Customer registration
-* Customer information management
-* Existing customer lookup
-* Customer-specific loan information
-* Customer/application identification
-* Authorization-aware application access
-
-## 💰 Loan Processing
-
-* Loan application workflow
-* Loan amount and income capture
-* Loan type handling
-* Credit-score-based assessment
-* Application status tracking
-* Loan history
-* Loan reports
-* Application tracker
-
-## 📄 Document Processing
-
-* PAN document processing
-* Aadhaar document processing
-* OCR-based document extraction
-* Document preprocessing
-* OCR confidence handling
-* Extracted-document information management
-
-> **Security:** Actual PAN/Aadhaar image files are not stored in the GitHub repository.
-
-## 🔐 KYC Verification
-
-The KYC workflow evaluates:
-
-* Name matching
-* PAN verification
-* Aadhaar verification
-* Date-of-birth matching
-* Similarity score
-* Overall KYC verification status
-
-Example:
-
-```text
-KYC Status: VERIFIED
-Name Match: True
-PAN Match: True
-Aadhaar Match: True
-DOB Match: True
-Similarity Score: 100%
-```
-
-## 🛡️ Fraud Detection
-
-The fraud-processing workflow evaluates application information and produces:
-
-* Fraud status
-* Fraud score
-* Risk level
-* Fraud-analysis reason
-
-Example:
-
-```text
-Fraud Status: NO_FRAUD
-Risk Level: LOW
-Fraud Score: 8.5
-```
-
-## 🧠 AI Loan Decisioning
-
-The system combines loan-processing information to generate an AI-assisted decision.
-
-Decision inputs can include:
-
-* Credit score
-* KYC status
-* Fraud status
-* Income
-* Loan information
-* Risk level
-* Loan-policy rules
-
-Example:
-
-```text
-Decision: APPROVED
-Risk Level: MEDIUM
-```
-
-The system also provides an explanation for the decision rather than returning only a binary result.
+| | |
+|---|---|
+| 🧮 **Explainable decisions** | EMI, FOIR (EMI-to-income), credit bands, KYC and fraud rules decide; the LLM only *explains*. Every decision lists the checks that passed or failed. |
+| 🛡️ **Fraud screening** | Weighted rules: OCR quality, missing fields, PAN format, **Aadhaar Verhoeff checksum**, document-vs-profile and cross-document consistency, application velocity. |
+| 🪪 **KYC** | Fuzzy, order-insensitive name matching + PAN / Aadhaar / DOB verification. |
+| 📄 **OCR** | OpenCV preprocessing → Tesseract (multi-PSM) → EasyOCR fallback → regex extraction. |
+| 💬 **AI Loan Assistant** | Keyword router answers factual questions from the DB with zero LLM tokens; reasoning questions go through a LangGraph tool-calling agent (Groq Llama 3.3). |
+| 📚 **RAG + MCP** | 16 policy documents in FAISS (MiniLM embeddings); policy tools served over MCP with automatic fallback to local RAG. |
+| 🔐 **Security** | bcrypt, role-based page guards, per-customer authorisation inside LLM tools, PII masking, hardened uploads. |
+| ✅ **Tested** | 92 pytest tests + GitHub Actions CI. |
 
 ---
 
-# 🧠 Generative AI Capabilities
-
-The project integrates several modern AI technologies.
-
-## LangChain
-
-LangChain is used to structure the AI application around:
-
-* LLM interaction
-* Agents
-* Tools
-* Prompt management
-* Retrieval
-* Application state
-* AI services
-
-Relevant implementation areas include:
+## 🏗️ Architecture
 
 ```text
-langchain_app/
-├── agent.py
-├── agent_service.py
-├── agent_tools.py
-├── chains.py
-├── chat_service.py
-├── context.py
-├── embeddings.py
-├── llm.py
-├── memory.py
-├── prompts.py
-├── question_router.py
-├── rag_tool.py
-├── retriever.py
-├── state.py
-├── tools.py
-└── vector_store.py
+┌────────────────────────── Streamlit UI ──────────────────────────┐
+│ Login · Registration · Application · Upload · OCR · KYC · Fraud  │
+│ Decision · Report · Dashboards · Tracker · AI Loan Assistant     │
+└───────────────┬───────────────────────────────┬──────────────────┘
+                │                               │
+        ┌───────▼────────┐              ┌───────▼─────────┐
+        │   Services     │              │  AI Assistant   │
+        │ KYC · Fraud    │              │ Router          │
+        │ Decision engine│              │ LangGraph agent │
+        │ Tracker · PDF  │              │ DB tools (masked)│
+        └───────┬────────┘              └──┬───────────┬──┘
+                │                          │           │
+        ┌───────▼────────┐        ┌────────▼───┐  ┌────▼──────────┐
+        │ SQLite         │        │ Groq LLM   │  │ MCP server    │
+        │ repositories   │        │ Gemini     │  │ policy tools  │
+        └────────────────┘        └────────────┘  │ FAISS RAG     │
+                                                  └───────────────┘
 ```
+
+A full walkthrough of every module, algorithm and library is in
+**[docs/PROJECT_ANALYSIS.md](docs/PROJECT_ANALYSIS.md)**.
 
 ---
 
-# 📚 RAG — Retrieval Augmented Generation
-
-The project contains a dedicated loan-policy knowledge base.
-
-Example knowledge sources include:
+## 🧮 How a loan is decided
 
 ```text
-Knowledge_Base/
-├── ai_decision.txt
-├── car_loan.txt
-├── credit_policy.txt
-├── documents.txt
-├── education_loan.txt
-├── eligibility.txt
-├── emi.txt
-├── faq.txt
-├── fraud_policy.txt
-├── home_loan.txt
-├── interest_rates.txt
-├── kyc.txt
-├── kyc_guidelines.txt
-├── loan_policy.txt
-├── ocr.txt
-└── personal_loan.txt
+fraud HIGH ............................ REJECTED
+credit score < 650 .................... REJECTED
+income < product minimum .............. REJECTED
+EMI > 65% of income ................... REJECTED
+KYC not VERIFIED ...................... MANUAL_REVIEW
+fraud MEDIUM .......................... MANUAL_REVIEW
+credit 650–749 / below product minimum  MANUAL_REVIEW
+EMI 50–65% of income .................. MANUAL_REVIEW
+otherwise ............................. APPROVED
 ```
 
-The RAG pipeline enables the AI assistant to retrieve relevant policy information before generating an answer.
+`EMI = P·r·(1+r)^n / ((1+r)^n − 1)` using the product's reference rate.
+The decision page also shows the **maximum affordable amount** at a 50 % FOIR.
 
-Example questions:
-
-```text
-What is the maximum LTV for a car loan?
-
-What is the maximum tenure for a car loan?
-
-Why is my credit score important for my loan?
-
-What documents are required for KYC?
-```
+| Product | Min credit | Min income | Tenure | Ref. rate |
+|---|---|---|---|---|
+| Home Loan | 700 | ₹25,000 | 5–30 yrs | 9.25 % |
+| Car Loan | 680 | ₹25,000 | 12–84 mo | 10.50 % |
+| Personal Loan | 720 | ₹20,000 | 12–60 mo | 14.25 % |
+| Education Loan | 650 | co-applicant | 5–15 yrs | 10.50 % |
 
 ---
 
-# 🗂️ FAISS Vector Store
+## ⚙️ Setup
 
-FAISS is used for vector-based similarity search.
-
-```text
-faiss_index/
-├── index.faiss
-└── index.pkl
-```
-
-The workflow is approximately:
-
-```text
-Loan Policy Documents
-        │
-        ▼
-Document Loading
-        │
-        ▼
-Text Processing
-        │
-        ▼
-Embeddings
-        │
-        ▼
-FAISS Vector Store
-        │
-        ▼
-Retriever
-        │
-        ▼
-Relevant Context
-        │
-        ▼
-LLM
-        │
-        ▼
-AI Response
-```
-
----
-
-# 🔌 MCP Integration
-
-The project also integrates **Model Context Protocol (MCP)** to expose loan-policy functionality as tools that can be consumed by an AI client.
-
-### MCP Architecture
-
-```text
-                  AI Loan Assistant
-                         │
-                         ▼
-                   MCP Client
-                         │
-                         │ Tool Calls
-                         ▼
-                ┌──────────────────┐
-                │   MCP Server     │
-                │ Loan Policy      │
-                │ Tools            │
-                └────────┬─────────┘
-                         │
-                         ▼
-                  Loan Policy Data
-```
-
-Current MCP components:
-
-```text
-mcp_client/
-├── loan_policy_mcp.py
-├── loan_policy_tools.py
-├── mcp_groq_agent.py
-├── test_loan_policy_mcp.py
-├── test_mcp_bridge.py
-├── test_mcp_client.py
-├── test_mcp_policy_helpers.py
-└── test_mcp_tool_call.py
-
-mcp_server/
-└── loan_policy_server.py
-```
-
-The MCP layer allows the AI application to interact with externalized loan-policy capabilities through structured tools instead of embedding every capability directly inside the LLM prompt.
-
----
-
-# 💬 AI Loan Assistant
-
-The Streamlit-based AI Loan Assistant provides a conversational interface for customers to ask questions about their loan application.
-
-Example interactions:
-
-```text
-What is my name?
-
-What is my email?
-
-Show my customer information.
-
-What is my loan amount?
-
-What is my loan status?
-
-Show my complete loan details.
-
-What is my KYC status?
-
-What is my fraud risk?
-
-Why was my loan approved?
-
-What is my credit score?
-
-Why is my credit score important for my loan?
-
-What is the maximum LTV for a car loan?
-
-What is the maximum tenure for a car loan?
-```
-
-The assistant can combine:
-
-```text
-Customer Context
-       +
-Loan Application Data
-       +
-KYC Results
-       +
-Fraud Results
-       +
-RAG Knowledge
-       +
-MCP Loan Policy Tools
-       ↓
-AI Loan Assistant
-```
-
----
-
-# 🖥️ Application Modules
-
-The Streamlit application contains multiple workflow pages.
-
-```text
-pages/
-├── 0_Existing_Customer.py
-├── 1_customer_registration.py
-├── 2_loan_application.py
-├── 3_upload_documents.py
-├── 4_OCR_Processing.py
-├── 5_KYC_Verification.py
-├── 6_Fraud_Detection.py
-├── 7_AI_Loan_Decision.py
-├── 8_Loan_Report.py
-├── 9_Dashboard.py
-├── 10_Loan_History.py
-├── AI_Loan_Assistant.py
-├── Admin_Dashboard.py
-└── application_tracker.py
-```
-
----
-
-# 🏗️ High-Level Architecture
-
-```text
-┌──────────────────────────────────────────────────────────┐
-│                    Streamlit UI                          │
-│                                                          │
-│ Customer Registration │ Loan Application │ Dashboard    │
-│ OCR │ KYC │ Fraud │ Decision │ Reports │ AI Assistant   │
-└──────────────────────────┬───────────────────────────────┘
-                           │
-                           ▼
-┌──────────────────────────────────────────────────────────┐
-│                  Application Services                     │
-│                                                          │
-│ Customer │ Loan │ OCR │ KYC │ Fraud │ Decision │ Tracker │
-└──────────────────────────┬───────────────────────────────┘
-                           │
-             ┌─────────────┼─────────────┐
-             │             │             │
-             ▼             ▼             ▼
-        ┌─────────┐   ┌──────────┐   ┌─────────────┐
-        │Database │   │ RAG/FAISS│   │ MCP Server  │
-        │         │   │          │   │             │
-        │Customer │   │Knowledge │   │Loan Policy  │
-        │Loan     │   │Base      │   │Tools        │
-        │KYC      │   │          │   │             │
-        │Fraud    │   │Retriever │   │             │
-        └─────────┘   └────┬─────┘   └──────┬──────┘
-                           │                │
-                           └───────┬────────┘
-                                   ▼
-                             ┌───────────┐
-                             │    LLM    │
-                             │ AI Agent  │
-                             └───────────┘
-```
-
----
-
-# 🛠️ Technology Stack
-
-| Area                      | Technology                            |
-| ------------------------- | ------------------------------------- |
-| Language                  | Python                                |
-| UI                        | Streamlit                             |
-| LLM Application Framework | LangChain                             |
-| Generative AI             | Gemini / supported LLM providers      |
-| Agent Framework           | LangChain Agents                      |
-| RAG                       | Retrieval Augmented Generation        |
-| Vector Database           | FAISS                                 |
-| Embeddings                | LangChain-compatible embedding models |
-| Protocol                  | Model Context Protocol (MCP)          |
-| OCR                       | EasyOCR / OCR processing              |
-| Database                  | SQLite / repository-based persistence |
-| Testing                   | Python test scripts                   |
-| Environment               | Python virtual environment            |
-| Version Control           | Git / GitHub                          |
-
----
-
-# 📁 Project Structure
-
-```text
-AI-Loan-Processing-System/
-│
-├── Knowledge_Base/
-├── database/
-├── faiss_index/
-├── langchain_app/
-├── mcp_client/
-├── mcp_server/
-├── ocr/
-├── pages/
-├── services/
-├── src/
-├── utils/
-│
-├── app.py
-├── streamlit_app.py
-├── config.py
-├── init_db.py
-├── build_vector_db.py
-│
-├── check_stages.py
-├── cleanup_duplicates.py
-│
-├── test_agent.py
-├── test_customer.py
-├── test_db.py
-├── test_documents.py
-├── test_get_documents.py
-├── test_helper.py
-├── test_import.py
-├── test_loans.py
-├── test_ocr.py
-│
-└── .gitignore
-```
-
----
-
-# ⚙️ Installation
-
-Clone the repository:
+**Requirements:** Python 3.11+, [Tesseract OCR](https://github.com/UB-Mannheim/tesseract/wiki)
+installed (auto-detected on `PATH` or the default Windows folder).
 
 ```bash
-git clone https://github.com/mdfaiz7777-tech/AI-Loan-Processing-System.git
+git clone https://github.com/<your-username>/AI-Loan-Processing-System.git
 cd AI-Loan-Processing-System
+python -m venv .venv
 ```
 
-Create and activate a Python virtual environment:
-
-### Windows
-
-```powershell
-python -m venv mcp_env
-.\mcp_env\Scripts\Activate.ps1
-```
-
-Install project dependencies according to the project's dependency configuration.
-
----
-
-# 🔐 Environment Configuration
-
-API keys and secrets must be provided through environment variables.
-
-Example:
-
-```text
-GOOGLE_API_KEY=<your-api-key>
-GROQ_API_KEY=<your-api-key>
-```
-
-Do **not** commit API keys, credentials, `.env` files, customer documents, PAN images, Aadhaar images, or other sensitive information.
-
-The repository's `.gitignore` excludes sensitive/local files such as:
-
-```text
-.env
-*.db
-*.sqlite3
-temp/
-pan.png
-aadhar.png
-aadhaar.png
-```
-
----
-
-# ▶️ Running the Application
-
-Start the Streamlit application:
+Activate it (`.venv\Scripts\activate` on Windows, `source .venv/bin/activate` elsewhere), then:
 
 ```bash
-streamlit run streamlit_app.py
+pip install -r requirements.txt
 ```
 
-The application will open in the local browser.
-
-The AI Loan Assistant can then be used to test customer-specific and policy-related questions.
-
----
-
-# 🔌 Running the MCP Server
-
-The project contains an MCP loan-policy server under:
+Copy `.env.example` to `.env` and add your keys:
 
 ```text
-mcp_server/loan_policy_server.py
+GROQ_API_KEY=...      # AI Loan Assistant reasoning
+GOOGLE_API_KEY=...    # decision explanations (optional)
 ```
 
-The MCP development tools can be used to run and inspect the server during development.
+Without keys the app still works: decisions use the rule summary and the
+assistant answers factual and policy questions directly.
 
-The MCP Inspector can be used to verify:
-
-* Server connectivity
-* Available tools
-* Tool schemas
-* Tool calls
-* Tool responses
-
----
-
-# 🧪 Testing
-
-The project includes multiple test scripts covering areas such as:
-
-```text
-Customer
-Database
-Documents
-OCR
-Loans
-Agents
-MCP
-Helpers
-Imports
-```
-
-Examples:
+Initialise the database and create a staff login:
 
 ```bash
-python test_customer.py
-python test_db.py
-python test_documents.py
-python test_ocr.py
-python test_agent.py
+python init_db.py
 ```
 
-MCP-specific tests are available under:
+```bash
+python -m scripts.create_user --role admin --username admin --email admin@example.com
+```
+
+Customers get a login after they have an application:
+
+```bash
+python -m scripts.create_user --role customer --username ravi --email ravi@example.com --customer-id CUST-XXXXXXXX
+```
+
+(Re)build the policy vector index after editing `Knowledge_Base/`:
+
+```bash
+python build_vector_db.py
+```
+
+## ▶️ Run
+
+```bash
+streamlit run app.py
+```
+
+Log in as staff and follow the sidebar: **Registration → Loan Application →
+Upload → OCR → KYC → Fraud → AI Decision → Report**.
+
+MCP server check (optional):
+
+```bash
+python -m scripts.check_mcp
+```
+
+## 🧪 Tests
+
+```bash
+pip install -r requirements-dev.txt
+```
+
+```bash
+python -m pytest -q
+```
+
+The suite runs on a temporary database and needs no API keys or ML models.
+
+---
+
+## 📁 Project structure
 
 ```text
-mcp_client/
+app.py                  Login + home
+pages/                  Streamlit workflow pages
+services/               decision_engine, decision_service, kyc_service,
+                        tracker_service, report_service
+src/                    fraud_agent, decision_agent (LLM explanation), OCR
+langchain_app/          LangGraph agent, tools, router, RAG chain, embeddings
+mcp_server/             FastMCP loan-policy server + policy fact parsers
+mcp_client/             MCP client used by the assistant
+database/               SQLite schema, migrations, repositories
+utils/                  validators, masking, uploads, sessions, dates, names
+Knowledge_Base/         Loan policy documents (RAG source)
+faiss_index/            Prebuilt vector index
+scripts/                create_user, check_mcp
+tests/                  pytest suite
+docs/                   Project analysis
 ```
 
 ---
 
-# 🔒 Security Considerations
+## 🔒 Security notes
 
-This project handles workflows involving sensitive financial/customer information.
-
-The repository follows these principles:
-
-* Do not commit PAN/Aadhaar images.
-* Do not commit `.env` files.
-* Do not commit API keys or credentials.
-* Keep generated customer documents outside Git.
-* Use masked customer information when demonstrating the application.
-* Use synthetic/test customer data for public demonstrations.
-* Separate application logic from sensitive customer data.
-
-**Important:** This project is intended as a learning/portfolio implementation and should not be considered production-ready financial software without additional security, compliance, privacy, audit, and infrastructure controls.
+- Never commit `.env`, databases, uploads or real identity documents (all git-ignored).
+- Use synthetic data for demos. The test identities are synthetic, checksum-valid numbers.
+- `faiss_index/index.pkl` is loaded with pickle — only load indexes you built yourself.
 
 ---
 
-# 📊 Current Implementation Status
+## 👥 Credits
 
-| Capability                     | Status         |
-| ------------------------------ | -------------- |
-| Streamlit UI                   | ✅ Implemented  |
-| Customer Registration          | ✅ Implemented  |
-| Loan Application               | ✅ Implemented  |
-| Document Processing            | ✅ Implemented  |
-| OCR                            | ✅ Implemented  |
-| KYC Verification               | ✅ Implemented  |
-| Fraud Detection                | ✅ Implemented  |
-| AI Loan Decision               | ✅ Implemented  |
-| Loan Reports                   | ✅ Implemented  |
-| Loan History                   | ✅ Implemented  |
-| AI Loan Assistant              | ✅ Implemented  |
-| LangChain                      | ✅ Integrated   |
-| RAG                            | ✅ Integrated   |
-| FAISS                          | ✅ Integrated   |
-| MCP Server                     | ✅ Integrated   |
-| MCP Client                     | ✅ Integrated   |
-| Loan Policy Tools              | ✅ Integrated   |
-| Authentication                 | 🔄 Enhancement |
-| Persistent Conversation Memory | 🔄 Enhancement |
-| Multiple Chat Sessions         | 🔄 Enhancement |
-| React Frontend                 | 🔄 Roadmap     |
-| AWS DynamoDB                   | 🔄 Roadmap     |
-| Production Deployment          | 🔄 Roadmap     |
+- **Original project:** [Mohamed Faiz](https://github.com/mdfaiz7777-tech/AI-Loan-Processing-System) —
+  initial Streamlit workflow, OCR, KYC, LangChain/RAG assistant and MCP integration.
+- **Improved version maintained by:** Darshana Rekhate — rule-based explainable decision
+  engine (EMI/FOIR), fraud and KYC rework, Aadhaar/PAN validation, role-based access
+  control, upload hardening, PII masking, PDF reports, MCP portability, test suite + CI,
+  and bug fixes. See [docs/PROJECT_ANALYSIS.md](docs/PROJECT_ANALYSIS.md#3-defects-found-in-the-original-code).
 
----
+## ⚠️ Disclaimer
 
-# 🗺️ Future Roadmap
-
-The next evolution of the system is planned around a more production-oriented architecture.
-
-### Phase 1 — Authentication
-
-* Login/sign-up
-* User identity
-* Session management
-* Role-based access
-* Customer/admin separation
-
-### Phase 2 — Conversational Memory
-
-* Short-term conversation memory
-* Long-term customer context
-* Session-based memory
-* Multiple conversations per user
-* Conversation history
-
-### Phase 3 — AWS Integration
-
-Planned components:
-
-```text
-React Frontend
-       │
-       ▼
-API Layer
-       │
-       ├── Authentication
-       ├── Loan Services
-       ├── AI Assistant
-       └── MCP Integration
-       │
-       ▼
-AWS Services
-       │
-       ├── DynamoDB
-       ├── Authentication
-       ├── Object Storage
-       └── Email / Notifications
-```
-
-### Phase 4 — React Frontend
-
-Move from the current Streamlit-focused UI toward a dedicated React application supporting:
-
-* Login
-* Sign-up
-* Customer dashboard
-* Multiple chat sessions
-* Loan dashboard
-* Application tracking
-* AI Loan Assistant
-* Admin dashboard
-
-### Phase 5 — Production AI Architecture
-
-Future enhancements include:
-
-* Better agent orchestration
-* Guardrails
-* Structured tool calling
-* Improved RAG evaluation
-* Observability
-* Prompt/version management
-* Model fallback
-* Automated evaluation
-* Audit logging
-
----
-
-# 🎯 Project Objective
-
-The primary objective of this project is to demonstrate how **Generative AI and modern AI engineering techniques can be integrated into a realistic financial-services workflow**.
-
-The project brings together:
-
-```text
-Traditional Software Engineering
-             +
-Data Processing
-             +
-OCR
-             +
-KYC
-             +
-Fraud Detection
-             +
-AI Decisioning
-             +
-LangChain
-             +
-RAG
-             +
-FAISS
-             +
-MCP
-             +
-Conversational AI
-```
-
-into a single end-to-end application.
-
----
-
-# 👨‍💻 Author
-
-**Mohamed Faiz**
-
-IT / Software Testing Professional | AI & Generative AI Enthusiast
-
-This project represents an ongoing exploration of:
-
-* Generative AI
-* LangChain
-* RAG
-* AI Agents
-* MCP
-* Intelligent Document Processing
-* Financial AI workflows
-* AI-assisted decision systems
-
----
-
-# ⚠️ Disclaimer
-
-This project is created for **educational, demonstration, and portfolio purposes**.
-
-It does not constitute financial advice, credit advice, lending advice, or a production banking/financial system.
-
-All customer information used for demonstrations should be synthetic or appropriately anonymized.
-
----
-
-⭐ If you find this project useful or interesting, consider starring the repository.
+For educational and demonstration purposes only. Not financial, credit or lending advice.
