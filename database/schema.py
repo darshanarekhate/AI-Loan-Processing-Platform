@@ -1,99 +1,80 @@
 from database.database import get_connection
 
-conn = get_connection()
 
-cursor = conn.cursor()
+def init_db():
+    """
+    Create every table and index used by the application.
 
-# -----------------------------
-# Customers Table
-# -----------------------------
-cursor.execute("""
-CREATE TABLE IF NOT EXISTS customers(
+    Safe to run repeatedly (CREATE ... IF NOT EXISTS).
+    """
 
-customer_id TEXT PRIMARY KEY,
+    conn = get_connection()
+    cursor = conn.cursor()
 
-full_name TEXT NOT NULL,
+    # -----------------------------
+    # Customers Table
+    # -----------------------------
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS customers(
 
-email TEXT,
+    customer_id TEXT PRIMARY KEY,
 
-phone TEXT,
+    full_name TEXT NOT NULL,
 
-pan TEXT UNIQUE,
+    email TEXT,
 
-aadhaar TEXT UNIQUE,
+    phone TEXT,
 
-date_of_birth TEXT,
+    pan TEXT UNIQUE,
 
-created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    aadhaar TEXT UNIQUE,
 
-)
-""")
+    date_of_birth TEXT,
 
-# -----------------------------
-# Loan Applications Table
-# -----------------------------
-cursor.execute("""
-CREATE TABLE IF NOT EXISTS loan_applications(
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 
-application_id TEXT PRIMARY KEY,
+    )
+    """)
 
-customer_id TEXT,
+    # -----------------------------
+    # Loan Applications Table
+    # -----------------------------
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS loan_applications(
 
-loan_type TEXT,
+    application_id TEXT PRIMARY KEY,
 
-loan_amount REAL,
+    customer_id TEXT,
 
-monthly_income REAL,
+    loan_type TEXT,
 
-credit_score INTEGER,
+    loan_amount REAL,
 
-application_status TEXT,
+    monthly_income REAL,
 
-risk_level TEXT,
+    credit_score INTEGER,
 
-created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    application_status TEXT,
 
-FOREIGN KEY(customer_id)
-REFERENCES customers(customer_id)
+    risk_level TEXT,
 
-)
-""")
+    tenure_months INTEGER,
 
-# -----------------------------
-# Documents Table
-# -----------------------------
-cursor.execute("""
-CREATE TABLE IF NOT EXISTS documents(
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 
-document_id INTEGER PRIMARY KEY AUTOINCREMENT,
+    FOREIGN KEY(customer_id)
+    REFERENCES customers(customer_id)
 
-application_id TEXT,
+    )
+    """)
 
-customer_id TEXT,
+    # -----------------------------
+    # Documents Table
+    # -----------------------------
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS documents(
 
-document_type TEXT,
-
-file_name TEXT,
-
-file_path TEXT,
-
-upload_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-
-FOREIGN KEY(application_id)
-REFERENCES loan_applications(application_id)
-ON DELETE CASCADE,
-
-FOREIGN KEY(customer_id)
-REFERENCES customers(customer_id)
-ON DELETE CASCADE
-
-)
-""")
-
-cursor.execute("""
-CREATE TABLE IF NOT EXISTS ocr_results(
-
-    ocr_id INTEGER PRIMARY KEY AUTOINCREMENT,
+    document_id INTEGER PRIMARY KEY AUTOINCREMENT,
 
     application_id TEXT,
 
@@ -101,19 +82,11 @@ CREATE TABLE IF NOT EXISTS ocr_results(
 
     document_type TEXT,
 
-    extracted_name TEXT,
+    file_name TEXT,
 
-    extracted_pan TEXT,
+    file_path TEXT,
 
-    extracted_aadhaar TEXT,
-
-    extracted_dob TEXT,
-
-    confidence REAL,
-
-    raw_text TEXT,
-
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    upload_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 
     FOREIGN KEY(application_id)
     REFERENCES loan_applications(application_id)
@@ -123,127 +96,229 @@ CREATE TABLE IF NOT EXISTS ocr_results(
     REFERENCES customers(customer_id)
     ON DELETE CASCADE
 
-)
-""")
+    )
+    """)
 
-# -----------------------------
-# Loan Decisions Table
-# -----------------------------
-cursor.execute("""
-CREATE TABLE IF NOT EXISTS loan_decisions(
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS ocr_results(
 
-    decision_id INTEGER PRIMARY KEY AUTOINCREMENT,
+        ocr_id INTEGER PRIMARY KEY AUTOINCREMENT,
 
-    application_id TEXT,
+        application_id TEXT,
 
-    customer_id TEXT,
+        customer_id TEXT,
 
-    decision TEXT,
+        document_type TEXT,
 
-    risk_level TEXT,
+        extracted_name TEXT,
 
-    explanation TEXT,
+        extracted_pan TEXT,
 
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        extracted_aadhaar TEXT,
 
-    FOREIGN KEY(application_id)
-    REFERENCES loan_applications(application_id)
-    ON DELETE CASCADE,
+        extracted_dob TEXT,
 
-    FOREIGN KEY(customer_id)
-    REFERENCES customers(customer_id)
-    ON DELETE CASCADE
+        confidence REAL,
 
-)
-""")
+        raw_text TEXT,
 
-# -----------------------------
-# KYC Verification Table
-# -----------------------------
-cursor.execute("""
-CREATE TABLE IF NOT EXISTS kyc_results(
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 
-    kyc_id INTEGER PRIMARY KEY AUTOINCREMENT,
+        FOREIGN KEY(application_id)
+        REFERENCES loan_applications(application_id)
+        ON DELETE CASCADE,
 
-    application_id TEXT,
+        FOREIGN KEY(customer_id)
+        REFERENCES customers(customer_id)
+        ON DELETE CASCADE
 
-    customer_id TEXT,
+    )
+    """)
 
-    name_match INTEGER,
+    # -----------------------------
+    # Loan Decisions Table
+    # -----------------------------
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS loan_decisions(
 
-    pan_match INTEGER,
+        decision_id INTEGER PRIMARY KEY AUTOINCREMENT,
 
-    aadhaar_match INTEGER,
+        application_id TEXT,
 
-    dob_match INTEGER,
+        customer_id TEXT,
 
-    similarity_score REAL,
+        decision TEXT,
 
-    verification_status TEXT,
+        risk_level TEXT,
 
-    remarks TEXT,
+        explanation TEXT,
 
-    verified_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 
-    FOREIGN KEY(application_id)
-    REFERENCES loan_applications(application_id)
-    ON DELETE CASCADE,
+        FOREIGN KEY(application_id)
+        REFERENCES loan_applications(application_id)
+        ON DELETE CASCADE,
 
-    FOREIGN KEY(customer_id)
-    REFERENCES customers(customer_id)
-    ON DELETE CASCADE
-)
-""")
+        FOREIGN KEY(customer_id)
+        REFERENCES customers(customer_id)
+        ON DELETE CASCADE
 
-# -----------------------------
-# Application Stages Table
-# -----------------------------
-cursor.execute("""
-CREATE TABLE IF NOT EXISTS application_stages(
+    )
+    """)
 
-    stage_id INTEGER PRIMARY KEY AUTOINCREMENT,
+    # -----------------------------
+    # KYC Verification Table
+    # -----------------------------
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS kyc_results(
 
-    application_id TEXT NOT NULL,
+        kyc_id INTEGER PRIMARY KEY AUTOINCREMENT,
 
-    stage_name TEXT NOT NULL,
+        application_id TEXT,
 
-    stage_status TEXT NOT NULL,
+        customer_id TEXT,
 
-    remarks TEXT,
+        name_match INTEGER,
 
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        pan_match INTEGER,
 
-    FOREIGN KEY(application_id)
-    REFERENCES loan_applications(application_id)
-    ON DELETE CASCADE
+        aadhaar_match INTEGER,
 
-)
-""")
+        dob_match INTEGER,
 
-# -----------------------------
-# Users Table
-# -----------------------------
-cursor.execute("""
-CREATE TABLE IF NOT EXISTS users(
+        similarity_score REAL,
 
-    user_id INTEGER PRIMARY KEY AUTOINCREMENT,
-    username TEXT UNIQUE NOT NULL,
-    email TEXT UNIQUE NOT NULL,
-    password_hash TEXT NOT NULL,
-    role TEXT NOT NULL DEFAULT 'customer',
-    customer_id TEXT,
-    is_active INTEGER DEFAULT 1,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    last_login TIMESTAMP,
+        verification_status TEXT,
 
-    FOREIGN KEY(customer_id)
-    REFERENCES customers(customer_id)
+        remarks TEXT,
 
-)
-""")
+        verified_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 
-conn.commit()
+        FOREIGN KEY(application_id)
+        REFERENCES loan_applications(application_id)
+        ON DELETE CASCADE,
 
-conn.close()
+        FOREIGN KEY(customer_id)
+        REFERENCES customers(customer_id)
+        ON DELETE CASCADE
+    )
+    """)
 
-print("Database initialized successfully.")
+    # -----------------------------
+    # Application Stages Table
+    # -----------------------------
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS application_stages(
+
+        stage_id INTEGER PRIMARY KEY AUTOINCREMENT,
+
+        application_id TEXT NOT NULL,
+
+        stage_name TEXT NOT NULL,
+
+        stage_status TEXT NOT NULL,
+
+        remarks TEXT,
+
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+        FOREIGN KEY(application_id)
+        REFERENCES loan_applications(application_id)
+        ON DELETE CASCADE
+
+    )
+    """)
+
+    # -----------------------------
+    # Users Table
+    # -----------------------------
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS users(
+
+        user_id INTEGER PRIMARY KEY AUTOINCREMENT,
+        username TEXT UNIQUE NOT NULL,
+        email TEXT UNIQUE NOT NULL,
+        password_hash TEXT NOT NULL,
+        role TEXT NOT NULL DEFAULT 'customer',
+        customer_id TEXT,
+        is_active INTEGER DEFAULT 1,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        last_login TIMESTAMP,
+
+        FOREIGN KEY(customer_id)
+        REFERENCES customers(customer_id)
+
+    )
+    """)
+
+    # -----------------------------
+    # Fraud Results Table
+    # -----------------------------
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS fraud_results(
+
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+
+        application_id TEXT UNIQUE NOT NULL,
+
+        customer_id TEXT,
+
+        fraud_status TEXT NOT NULL,
+
+        risk_level TEXT NOT NULL,
+
+        fraud_score REAL NOT NULL,
+
+        fraud_reason TEXT,
+
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+        FOREIGN KEY(application_id)
+        REFERENCES loan_applications(application_id)
+        ON DELETE CASCADE
+    )
+    """)
+
+    # Loan tenure (months) was added after the first release.
+    loan_columns = {
+        row["name"]
+        for row in cursor.execute("PRAGMA table_info(loan_applications)")
+    }
+
+    if "tenure_months" not in loan_columns:
+        cursor.execute(
+            "ALTER TABLE loan_applications ADD COLUMN tenure_months INTEGER"
+        )
+
+    # Older databases created fraud_results without customer_id.
+    fraud_columns = {
+        row["name"]
+        for row in cursor.execute("PRAGMA table_info(fraud_results)")
+    }
+
+    if "customer_id" not in fraud_columns:
+        cursor.execute(
+            "ALTER TABLE fraud_results ADD COLUMN customer_id TEXT"
+        )
+
+    # -----------------------------
+    # Indexes for the hot lookups
+    # -----------------------------
+    for statement in [
+        "CREATE INDEX IF NOT EXISTS idx_loans_customer ON loan_applications(customer_id)",
+        "CREATE INDEX IF NOT EXISTS idx_documents_application ON documents(application_id)",
+        "CREATE INDEX IF NOT EXISTS idx_ocr_application ON ocr_results(application_id)",
+        "CREATE INDEX IF NOT EXISTS idx_kyc_application ON kyc_results(application_id)",
+        "CREATE INDEX IF NOT EXISTS idx_decisions_application ON loan_decisions(application_id)",
+        "CREATE INDEX IF NOT EXISTS idx_stages_application ON application_stages(application_id)",
+    ]:
+        cursor.execute(statement)
+
+    conn.commit()
+
+    conn.close()
+
+
+if __name__ == "__main__":
+    init_db()
+    print("Database initialized successfully.")

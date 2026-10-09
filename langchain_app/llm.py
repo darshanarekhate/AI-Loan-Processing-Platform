@@ -1,35 +1,33 @@
-import os
+import logging
+from functools import lru_cache
 
-from dotenv import load_dotenv
 from langchain_groq import ChatGroq
 
-
-# ============================================================
-# Load environment variables
-# ============================================================
-
-load_dotenv()
+from config import GROQ_API_KEY, GROQ_MODEL
 
 
-GROQ_API_KEY = os.getenv("GROQ_API_KEY")
+logger = logging.getLogger(__name__)
 
 
-if not GROQ_API_KEY:
-    raise RuntimeError(
-        "GROQ_API_KEY is not configured in the .env file."
+@lru_cache(maxsize=1)
+def get_llm():
+    """
+    Create the Groq chat model on first use.
+
+    Lazy creation means the assistant's database and policy routes keep
+    working even when GROQ_API_KEY is not configured.
+    """
+
+    if not GROQ_API_KEY:
+        raise RuntimeError(
+            "GROQ_API_KEY is not configured in the .env file."
+        )
+
+    logger.info("Primary LLM: Groq - %s", GROQ_MODEL)
+
+    return ChatGroq(
+        model=GROQ_MODEL,
+        groq_api_key=GROQ_API_KEY,
+        temperature=0.2,
+        max_retries=2,
     )
-
-
-# ============================================================
-# Primary LLM
-# ============================================================
-
-llm = ChatGroq(
-    model="llama-3.3-70b-versatile",
-    groq_api_key=GROQ_API_KEY,
-    temperature=0.2,
-    max_retries=2,
-)
-
-
-print("Primary LLM: Groq - llama-3.3-70b-versatile")

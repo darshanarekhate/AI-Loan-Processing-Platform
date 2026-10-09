@@ -1,20 +1,33 @@
 import streamlit as st
+from database.authorization_repository import is_application_authorized
 from services.tracker_service import get_application_journey
+from utils.session import is_staff, require_login
 
 st.set_page_config(page_title="Application Tracker", layout="wide")
+
+require_login()
 
 st.title("📌 AI Loan Application Tracker")
 st.caption("Track the complete processing journey of a loan application.")
 
 application_id = st.text_input(
     "Enter Application ID",
+    value=st.session_state.get("application_id") or "",
     placeholder="Example: APP-4FE3EF66"
-)
+).strip()
 
 if st.button("🔍 Search", use_container_width=True):
 
-    if not application_id.strip():
+    if not application_id:
         st.warning("Please enter an Application ID.")
+        st.stop()
+
+    # Customers may only track their own applications.
+    if not is_staff() and not is_application_authorized(
+        application_id,
+        st.session_state.get("customer_id"),
+    ):
+        st.error("Application ID not found.")
         st.stop()
 
     application, stages = get_application_journey(application_id)

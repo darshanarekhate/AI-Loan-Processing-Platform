@@ -4,6 +4,11 @@ from langchain_app.auth import authenticate_user
 from database.authorization_repository import (
     get_applications_by_customer_id,
 )
+from utils.session import (
+    STAFF_ROLES,
+    ensure_database,
+    logout,
+)
 
 
 # ============================================================
@@ -16,22 +21,21 @@ st.set_page_config(
     layout="wide",
 )
 
+ensure_database()
+
 
 # ============================================================
 # SESSION STATE INITIALIZATION
 # ============================================================
 
-if "authenticated" not in st.session_state:
-    st.session_state.authenticated = False
-
-if "username" not in st.session_state:
-    st.session_state.username = None
-
-if "customer_id" not in st.session_state:
-    st.session_state.customer_id = None
-
-if "application_id" not in st.session_state:
-    st.session_state.application_id = None
+for key, default in {
+    "authenticated": False,
+    "username": None,
+    "role": None,
+    "customer_id": None,
+    "application_id": None,
+}.items():
+    st.session_state.setdefault(key, default)
 
 
 # ============================================================
@@ -62,85 +66,64 @@ if not st.session_state.authenticated:
             use_container_width=True,
         )
 
-    if login_button:
+    st.caption(
+        "No account yet? Create one with "
+        "`python -m scripts.create_user --role admin`."
+    )
 
-        # ----------------------------------------------------
-        # Validate input
-        # ----------------------------------------------------
+    if login_button:
 
         if not username or not password:
 
             st.error(
                 "Please enter both username and password."
             )
+            st.stop()
 
-        else:
+        user = authenticate_user(
+            username=username.strip(),
+            password=password,
+        )
 
-            # ------------------------------------------------
-            # Authenticate user
-            # ------------------------------------------------
+        if not user:
 
-            user = authenticate_user(
-                username=username,
-                password=password,
+            # Same message for unknown user and wrong password so
+            # usernames cannot be enumerated.
+            st.error(
+                "❌ Invalid username or password."
+            )
+            st.stop()
+
+        application_id = None
+
+        # ----------------------------------------------------
+        # Customers are bound to their own applications;
+        # staff (admin / officer) can work on any application.
+        # ----------------------------------------------------
+
+        if user["role"] not in STAFF_ROLES:
+
+            applications = get_applications_by_customer_id(
+                user["customer_id"]
             )
 
-            if user:
-
-                # --------------------------------------------
-                # Store authenticated user information
-                # --------------------------------------------
-
-                st.session_state.authenticated = True
-                st.session_state.username = user["username"]
-                st.session_state.customer_id = user["customer_id"]
-
-                # --------------------------------------------
-                # Load applications belonging to this customer
-                # --------------------------------------------
-
-                applications = get_applications_by_customer_id(
-                    user["customer_id"]
-                )
-
-                # --------------------------------------------
-                # Authorization check
-                # --------------------------------------------
-
-                if not applications:
-
-                    st.error(
-                        "❌ No loan applications are associated "
-                        "with this customer."
-                    )
-
-                    # Clear authentication state
-                    st.session_state.authenticated = False
-                    st.session_state.username = None
-                    st.session_state.customer_id = None
-                    st.session_state.application_id = None
-
-                    st.stop()
-
-                # --------------------------------------------
-                # Select first authorized application
-                # --------------------------------------------
-
-                st.session_state.application_id = (
-                    applications[0]["application_id"]
-                )
-
-                st.success(
-                    "✅ Login successful!"
-                )
-
-                st.rerun()
-
-            else:
+            if not applications:
 
                 st.error(
-                    "❌ Invalid username or password."
+                    "❌ No loan applications are associated "
+                    "with this customer."
                 )
+                st.stop()
+
+            application_id = applications[0]["application_id"]
+
+        st.session_state.authenticated = True
+        st.session_state.username = user["username"]
+        st.session_state.role = user["role"]
+        st.session_state.customer_id = user["customer_id"]
+        st.session_state.application_id = application_id
+
+        st.rerun()
 
     st.stop()
 
@@ -155,44 +138,38 @@ st.success(
     f"Welcome, **{st.session_state.username}**!"
 )
 
-st.write(
-    "You are successfully authenticated."
-)
+if st.session_state.role in STAFF_ROLES:
 
+    st.info(f"Role: {st.session_state.role.title()}")
 
-# ============================================================
-# USER INFORMATION
-# ============================================================
+    st.markdown(
+        """
+### Loan processing workflow
 
-st.info(
-    f"Customer ID: {st.session_state.customer_id}"
-)
+1. **Customer Registration** or **Existing Customer** lookup
+2. **Loan Application** (amount, income, tenure, credit score)
+3. **Upload Documents** → **OCR Processing**
+4. **KYC Verification** → **Fraud Detection**
+5. **AI Loan Decision** → **Loan Report**
 
-
-# ============================================================
-# CURRENT AUTHORIZED APPLICATION
-# ============================================================
-
-st.info(
-    f"Application ID: {st.session_state.application_id}"
-)
-
-
-st.markdown("---")
-
-
-# ============================================================
-# AVAILABLE MODULES
-# ============================================================
-
-st.subheader("Available Modules")
-
-st.write(
-    """
-Use the sidebar to navigate through the available
-loan-processing modules.
+Use the sidebar to open each step, and the dashboards for analytics.
 """
-)
+    )
+
+else:
+
+    st.info(
+        f"Customer ID: {st.session_state.customer_id}"
+    )
+
+    st.info(
+        f"Application ID: {st.session_state.application_id}"
+    )
+
+    st.markdown(
+        "Open **AI Loan Assistant** in the sidebar to ask about your "
+        "application, or **Application Tracker** to follow its progress."
+    )
 
 
 # ============================================================
@@ -203,32 +180,11 @@ st.sidebar.success(
     f"Logged in as: {st.session_state.username}"
 )
 
-st.sidebar.info(
-    f"Customer ID:\n{st.session_state.customer_id}"
-)
-
-st.sidebar.info(
-    f"Application ID:\n{st.session_state.application_id}"
-)
-
-
-# ============================================================
-# LOGOUT
-# ============================================================
-
 if st.sidebar.button(
     "🚪 Logout",
     use_container_width=True,
 ):
 
-    # Clear authentication information
-    st.session_state.authenticated = False
-    st.session_state.username = None
-    st.session_state.customer_id = None
-    st.session_state.application_id = None
-
-    # Clear chat history if present
-    if "messages" in st.session_state:
-        st.session_state.messages = []
+    logout()
 
     st.rerun()

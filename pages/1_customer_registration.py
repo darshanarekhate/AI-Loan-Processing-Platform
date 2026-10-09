@@ -1,78 +1,99 @@
+import sqlite3
+from datetime import date
+
 import streamlit as st
 
 from utils.helpers import generate_customer_id
 from database.customer_repository import save_customer
-from utils.validators import validate_customer_registration
-from datetime import date
+from utils.session import require_staff
+from utils.validators import (
+    normalize_aadhaar,
+    normalize_pan,
+    normalize_phone,
+    validate_customer_registration,
+)
 
-st.title("👤 Customer Registration")
 
 st.set_page_config(
-    page_title="AI Loan System",
+    page_title="Customer Registration",
     page_icon="🏦",
     layout="wide"
 )
 
-st.title("🏦 AI Loan System")
+require_staff()
 
-st.subheader("Customer Registration")
+st.title("👤 Customer Registration")
 
-full_name = st.text_input("Full Name")
+with st.form("customer_registration"):
 
-email = st.text_input("Email Address")
+    full_name = st.text_input("Full Name")
 
-phone = st.text_input("Phone Number")
+    email = st.text_input("Email Address")
 
-pan = st.text_input("PAN Number")
+    phone = st.text_input("Phone Number", placeholder="10-digit mobile number")
 
-aadhaar = st.text_input("Aadhaar Number")
+    pan = st.text_input("PAN Number", placeholder="ABCPE1234F")
 
-dob = st.date_input(
-    "Date of Birth",
-    value=date(1993, 5, 18),
-    min_value=date(1950, 1, 1),
-    max_value=date.today()
-)
+    aadhaar = st.text_input("Aadhaar Number", placeholder="12 digits")
+
+    dob = st.date_input(
+        "Date of Birth",
+        value=date(1995, 1, 1),
+        min_value=date(1940, 1, 1),
+        max_value=date.today()
+    )
+
+    submitted = st.form_submit_button("Register Customer")
 
 
-if st.button("Register Customer"):
+if submitted:
 
     valid, message = validate_customer_registration(
         full_name,
         phone,
         pan,
-        aadhaar
+        aadhaar,
+        email=email,
+        date_of_birth=dob,
     )
 
     if not valid:
         st.error(message)
+        st.stop()
 
-    else:
+    customer = {
 
-        customer = {
+        "customer_id": generate_customer_id(),
 
-            "customer_id": generate_customer_id(),
+        "full_name": " ".join(full_name.split()),
 
-            "full_name": full_name,
+        "email": email.strip(),
 
-            "email": email,
+        "phone": normalize_phone(phone),
 
-            "phone": phone,
+        "pan": normalize_pan(pan),
 
-            "pan": pan,
+        "aadhaar": normalize_aadhaar(aadhaar),
 
-            "aadhaar": aadhaar,
+        "date_of_birth": str(dob)
 
-            "date_of_birth": str(dob)
+    }
 
-        }
-
+    try:
         save_customer(customer)
+    except sqlite3.IntegrityError:
+        st.error("A customer with this PAN or Aadhaar already exists.")
+        st.stop()
 
-        st.session_state["customer_id"] = customer["customer_id"]
+    st.session_state["customer_id"] = customer["customer_id"]
+    st.session_state.pop("application_id", None)
 
-        st.success("✅ Customer Registered Successfully!")
+    st.success("✅ Customer Registered Successfully!")
 
-        st.success(f"Customer ID: {customer['customer_id']}")
+    st.success(f"Customer ID: {customer['customer_id']}")
 
-        st.json(customer)
+    st.page_link(
+        "pages/2_loan_application.py",
+        label="Continue to Loan Application",
+        icon="➡️",
+    )

@@ -1,5 +1,3 @@
-from difflib import SequenceMatcher
-
 from database.loan_repository import get_loan_by_application
 from database.customer_repository import get_customer_by_id
 from database.ocr_repository import get_ocr_results
@@ -7,32 +5,11 @@ from database.kyc_result_repository import save_kyc_result
 
 from services.tracker_service import kyc_completed
 from utils.date_utils import normalize_date
+from utils.name_utils import name_similarity
+from utils.validators import normalize_aadhaar, normalize_pan
 
 
-# -----------------------------------------
-# Normalize Names
-# -----------------------------------------
-def normalize_name(name):
-
-    if not name:
-        return ""
-
-    return " ".join(name.upper().split())
-
-
-# -----------------------------------------
-# Similarity
-# -----------------------------------------
-def calculate_similarity(name1, name2):
-
-    return round(
-        SequenceMatcher(
-            None,
-            normalize_name(name1),
-            normalize_name(name2)
-        ).ratio() * 100,
-        2
-    )
+NAME_MATCH_THRESHOLD = 85
 
 
 # -----------------------------------------
@@ -84,37 +61,39 @@ def verify_kyc(application_id):
     # Name Similarity
     # -------------------------------------
 
-    similarity = max(
-        calculate_similarity(
+    # Both documents must match the registered name; the weaker of
+    # the two scores decides.
+    similarity = min(
+        name_similarity(
             customer["full_name"],
             pan["extracted_name"]
         ),
-        calculate_similarity(
+        name_similarity(
             customer["full_name"],
             aadhaar["extracted_name"]
         )
     )
 
-    name_match = similarity >= 85
+    name_match = similarity >= NAME_MATCH_THRESHOLD
 
     # -------------------------------------
     # PAN Match
     # -------------------------------------
 
-    pan_match = (
-        customer["pan"].upper().strip()
-        ==
-        pan["extracted_pan"].upper().strip()
+    extracted_pan = normalize_pan(pan["extracted_pan"])
+
+    pan_match = bool(extracted_pan) and (
+        normalize_pan(customer["pan"]) == extracted_pan
     )
 
     # -------------------------------------
     # Aadhaar Match
     # -------------------------------------
 
-    aadhaar_match = (
-        customer["aadhaar"].replace(" ", "")
-        ==
-        aadhaar["extracted_aadhaar"].replace(" ", "")
+    extracted_aadhaar = normalize_aadhaar(aadhaar["extracted_aadhaar"])
+
+    aadhaar_match = extracted_aadhaar.isdigit() and (
+        normalize_aadhaar(customer["aadhaar"]) == extracted_aadhaar
     )
 
     # -------------------------------------
@@ -134,7 +113,7 @@ def verify_kyc(application_id):
     )
 
 
-    dob_match = (
+    dob_match = bool(customer_dob) and (
         customer_dob == pan_dob
         and
         customer_dob == aadhaar_dob
@@ -162,11 +141,13 @@ def verify_kyc(application_id):
     # Status
     # -------------------------------------
 
-    if score >= 90:
+    # Every check is worth 25 points: all four -> VERIFIED,
+    # three of four -> PARTIAL, otherwise MANUAL_REVIEW.
+    if score == 100:
 
         status = "VERIFIED"
 
-    elif score >= 70:
+    elif score >= 75:
 
         status = "PARTIAL"
 
@@ -188,8 +169,17 @@ def verify_kyc(application_id):
     if dob_match:
         remarks.append("DOB Verified")
 
-    if not remarks:
-        remarks.append("Identity verification failed")
+    if not name_match:
+        remarks.append(f"Name similarity {similarity}% below {NAME_MATCH_THRESHOLD}%")
+
+    if not pan_match:
+        remarks.append("PAN mismatch")
+
+    if not aadhaar_match:
+        remarks.append("Aadhaar mismatch")
+
+    if not dob_match:
+        remarks.append("DOB mismatch")
 
     # -------------------------------------
     # Save Result

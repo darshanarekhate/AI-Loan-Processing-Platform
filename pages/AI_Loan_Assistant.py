@@ -1,12 +1,16 @@
 import streamlit as st
 
+from database.authorization_repository import is_application_authorized
 from langchain_app.agent_service import ask_agent
+from utils.session import require_login
 
 
 st.set_page_config(
     page_title="AI Loan Assistant",
     page_icon="🤖",
 )
+
+require_login()
 
 st.title("🤖 AI Loan Assistant")
 
@@ -20,6 +24,17 @@ customer_id = st.session_state.get("customer_id")
 if not application_id or not customer_id:
     st.error("No active loan application found.")
     st.stop()
+
+# Defence in depth: the assistant's tools are scoped to this pair,
+# so make sure the application really belongs to the customer.
+if not is_application_authorized(application_id, customer_id):
+    st.error("This application does not belong to the selected customer.")
+    st.stop()
+
+# Chat history belongs to one application; reset when it changes.
+if st.session_state.get("chat_application_id") != application_id:
+    st.session_state.messages = []
+    st.session_state.chat_application_id = application_id
 
 st.info(f"Application ID : {application_id}")
 

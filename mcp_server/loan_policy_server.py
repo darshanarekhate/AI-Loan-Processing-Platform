@@ -1,4 +1,5 @@
 import sys
+from functools import lru_cache
 from pathlib import Path
 
 # ============================================================
@@ -12,17 +13,17 @@ if str(PROJECT_ROOT) not in sys.path:
 
 
 # ============================================================
-# LangChain Loan Policy Retriever
-# ============================================================
-
-from langchain_app.retriever import get_retriever
-
-
-# ============================================================
 # MCP
 # ============================================================
 
 from mcp.server.fastmcp import FastMCP
+
+from mcp_server.policy_facts import (
+    parse_eligible_vehicles,
+    parse_ltv_percent,
+    parse_tenure_months,
+    read_policy,
+)
 
 
 # ============================================================
@@ -32,11 +33,15 @@ from mcp.server.fastmcp import FastMCP
 mcp = FastMCP("Loan Policy Server")
 
 
-# ============================================================
-# Retriever
-# ============================================================
+@lru_cache(maxsize=1)
+def get_policy_retriever():
+    """
+    Load the FAISS retriever on first use (embedding model is heavy).
+    """
 
-retriever = get_retriever()
+    from langchain_app.retriever import get_retriever
+
+    return get_retriever()
 
 
 # ============================================================
@@ -50,7 +55,7 @@ def search_loan_policy(question: str) -> str:
     relevant policy information.
     """
 
-    docs = retriever.invoke(question)
+    docs = get_policy_retriever().invoke(question)
 
     if not docs:
         return (
@@ -58,12 +63,7 @@ def search_loan_policy(question: str) -> str:
             "in the loan policy."
         )
 
-    results = []
-
-    for doc in docs:
-        results.append(doc.page_content)
-
-    return "\n\n---\n\n".join(results)
+    return "\n\n---\n\n".join(doc.page_content for doc in docs)
 
 
 # ============================================================
@@ -77,8 +77,13 @@ def get_car_loan_ltv() -> str:
     for a car loan.
     """
 
+    ltv = parse_ltv_percent(read_policy("car_loan.txt"))
+
+    if ltv is None:
+        return "The car loan LTV is not specified in the loan policy."
+
     return (
-        "The bank may finance up to 90% of the "
+        f"The bank may finance up to {ltv}% of the "
         "vehicle's on-road price, subject to policy "
         "and customer eligibility."
     )
@@ -94,9 +99,16 @@ def get_car_loan_tenure() -> str:
     Return the minimum and maximum car loan tenure.
     """
 
+    tenure = parse_tenure_months(read_policy("car_loan.txt"))
+
+    if tenure is None:
+        return "The car loan tenure is not specified in the loan policy."
+
+    minimum, maximum = tenure
+
     return (
-        "Car loan tenure ranges from "
-        "12 months to 84 months."
+        f"Car loan tenure ranges from {minimum} months "
+        f"to {maximum} months."
     )
 
 
@@ -110,11 +122,12 @@ def get_eligible_car_vehicles() -> str:
     Return the vehicles eligible for a car loan.
     """
 
-    return (
-        "Eligible vehicles include: "
-        "New Cars, Used Cars, SUVs, Hatchbacks, "
-        "Sedans, and Multi-Utility Vehicles (MUVs)."
-    )
+    vehicles = parse_eligible_vehicles(read_policy("car_loan.txt"))
+
+    if not vehicles:
+        return "Eligible vehicles are not listed in the loan policy."
+
+    return "Eligible vehicles include: " + ", ".join(vehicles) + "."
 
 
 # ============================================================

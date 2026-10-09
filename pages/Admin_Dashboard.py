@@ -1,6 +1,8 @@
 import streamlit as st
 import pandas as pd
 
+from utils.session import require_staff
+
 from database.loan_repository import (
     get_all_loans,
     get_loan_status_count,
@@ -13,6 +15,8 @@ st.set_page_config(
     page_icon="📊",
     layout="wide"
 )
+
+require_staff()
 
 
 st.title("📊 AI Loan Admin Dashboard")
@@ -98,7 +102,7 @@ status_data = get_loan_status_count()
 if status_data:
 
     df_status = pd.DataFrame(
-        status_data,
+        [tuple(row) for row in status_data],
         columns=[
             "Status",
             "Count"
@@ -126,7 +130,7 @@ risk_data = get_risk_level_count()
 if risk_data:
 
     df_risk = pd.DataFrame(
-        risk_data,
+        [tuple(row) for row in risk_data],
         columns=[
             "Risk",
             "Count"

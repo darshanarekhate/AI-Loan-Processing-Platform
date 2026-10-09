@@ -1,37 +1,43 @@
+import logging
 import re
-
-from transformers import (
-    AutoTokenizer,
-    AutoModelForSeq2SeqLM,
-)
+from functools import lru_cache
 
 from langchain_app.retriever import get_retriever
+
+
+logger = logging.getLogger(__name__)
 
 
 # ============================================================
 # Loan Policy Retriever
 # ============================================================
 
-retriever = get_retriever()
+@lru_cache(maxsize=1)
+def get_policy_retriever():
+    return get_retriever()
 
 
 # ============================================================
-# Local Hugging Face Model
+# Local Hugging Face Model (loaded on first use)
 # ============================================================
 
 MODEL_NAME = "google/flan-t5-small"
 
-print("Loading local policy model...")
 
-tokenizer = AutoTokenizer.from_pretrained(
-    MODEL_NAME
-)
+@lru_cache(maxsize=1)
+def get_policy_model():
 
-policy_model = AutoModelForSeq2SeqLM.from_pretrained(
-    MODEL_NAME
-)
+    from transformers import (
+        AutoTokenizer,
+        AutoModelForSeq2SeqLM,
+    )
 
-print("Local policy model loaded successfully.")
+    logger.info("Loading local policy model %s", MODEL_NAME)
+
+    return (
+        AutoTokenizer.from_pretrained(MODEL_NAME),
+        AutoModelForSeq2SeqLM.from_pretrained(MODEL_NAME),
+    )
 
 
 # ============================================================
@@ -43,7 +49,7 @@ def retrieve_policy(question: str):
     Retrieve relevant loan policy documents from FAISS.
     """
 
-    return retriever.invoke(question)
+    return get_policy_retriever().invoke(question)
 
 
 # ============================================================
@@ -402,6 +408,8 @@ def get_exact_policy_answer(
 
 def generate_answer(prompt: str) -> str:
 
+    tokenizer, policy_model = get_policy_model()
+
     inputs = tokenizer(
         prompt,
         return_tensors="pt",
@@ -499,7 +507,7 @@ def ask_policy(question: str) -> str:
 
     if exact_answer:
 
-        print("POLICY ROUTE: EXACT POLICY EXTRACTION")
+        logger.info("Policy route: exact extraction")
 
         return exact_answer
 
@@ -507,7 +515,7 @@ def ask_policy(question: str) -> str:
     # General local model route
     # --------------------------------------------------------
 
-    print("POLICY ROUTE: LOCAL FLAN-T5")
+    logger.info("Policy route: local FLAN-T5")
 
     prompt = f"""
 You are a bank loan policy assistant.
@@ -539,9 +547,9 @@ Answer:
 
         answer = generate_answer(prompt)
 
-    except Exception as exc:
+    except Exception:
 
-        print("Policy model error:", exc)
+        logger.exception("Policy model error")
 
         return (
             "Unable to generate a loan policy answer "

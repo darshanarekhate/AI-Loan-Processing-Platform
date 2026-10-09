@@ -1,17 +1,9 @@
 import streamlit as st
 
-from database.loan_repository import (
-    get_loan_by_application,
-    update_loan_status,
-    update_risk_level,
-)
-
 from database.kyc_result_repository import get_kyc_status
-
-from database.decision_repository import save_decision
-
-from src.fraud_agent import fraud_check
-from src.decision_agent import ai_decision
+from database.loan_repository import get_loan_by_application
+from services.decision_service import run_loan_decision
+from utils.session import require_staff
 
 
 st.set_page_config(
@@ -19,225 +11,104 @@ st.set_page_config(
     page_icon="🤖"
 )
 
+require_staff()
 
 st.title("🤖 AI Loan Decision")
 
-
-application_id = st.session_state.get(
-    "application_id"
+st.caption(
+    "The decision is made by transparent policy rules (credit score, "
+    "KYC, fraud risk, minimum income and EMI affordability). "
+    "The AI model only writes the explanation."
 )
 
-customer_id = st.session_state.get(
-    "customer_id"
-)
+
+application_id = st.session_state.get("application_id")
+customer_id = st.session_state.get("customer_id")
 
 
 if not application_id or not customer_id:
 
-    st.error(
-        "Application not found."
-    )
+    st.error("Application not found.")
 
     st.stop()
 
 
-
-loan = get_loan_by_application(
-    application_id
-)
+loan = get_loan_by_application(application_id)
 
 
 if not loan:
 
-    st.error(
-        "Loan application not found."
-    )
+    st.error("Loan application not found.")
 
     st.stop()
-
-
-
-# ---------------------------------
-# Get KYC Status from Database
-# ---------------------------------
-
-kyc_status = get_kyc_status(
-    application_id
-)
-
-
-
-# ---------------------------------
-# Fraud Check
-# ---------------------------------
-
-fraud = fraud_check(
-    application_id,
-    customer_id
-)
-
-
-fraud_status = fraud["risk"]
-
-fraud_reason = ", ".join(
-    fraud["reasons"]
-)
-
 
 
 # ---------------------------------
 # Application Summary
 # ---------------------------------
 
-st.subheader(
-    "Application Summary"
-)
+st.subheader("Application Summary")
 
+c1, c2, c3 = st.columns(3)
 
-st.write(
-    f"**Application ID:** {application_id}"
-)
+c1.metric("Loan Type", loan["loan_type"])
+c2.metric("Loan Amount", f"₹{loan['loan_amount']:,.0f}")
+c3.metric("Monthly Income", f"₹{loan['monthly_income']:,.0f}")
 
-st.write(
-    f"**Customer ID:** {customer_id}"
-)
+c1, c2, c3 = st.columns(3)
 
-st.write(
-    f"**Credit Score:** {loan['credit_score']}"
-)
-
-st.write(
-    f"**Monthly Income:** ₹{loan['monthly_income']:,.0f}"
-)
-
-st.write(
-    f"**Loan Amount:** ₹{loan['loan_amount']:,.0f}"
-)
-
-st.write(
-    f"**KYC Status:** {kyc_status}"
-)
-
-st.write(
-    f"**Fraud Risk:** {fraud_status}"
-)
-
-
+c1.metric("Credit Score", loan["credit_score"])
+c2.metric("Tenure", f"{loan['tenure_months'] or '-'} months")
+c3.metric("KYC Status", get_kyc_status(application_id))
 
 st.divider()
 
 
-
 # ---------------------------------
-# Run AI Decision
+# Run Decision
 # ---------------------------------
 
-if st.button(
-    "Run AI Decision"
-):
+if st.button("Run AI Decision", type="primary", use_container_width=True):
 
-    with st.spinner(
-        "AI is analysing the loan application..."
-    ):
+    with st.spinner("Evaluating the application..."):
 
-
-        response = ai_decision(
-
-            customer_id=customer_id,
-
-            application_id=application_id,
-
-            kyc_status=kyc_status,
-
-            fraud_status=fraud_status,
-
-            fraud_reason=fraud_reason,
-
-            credit_score=loan["credit_score"],
-
-            monthly_income=loan["monthly_income"],
-
-            loan_amount=loan["loan_amount"],
-
+        outcome = run_loan_decision(
+            application_id,
+            customer_id,
         )
 
+    if "error" in outcome:
+        st.error(outcome["error"])
+        st.stop()
 
-    # ---------------------------------
-    # Extract Decision
-    # ---------------------------------
+    result = outcome["result"]
 
-    decision = "MANUAL REVIEW"
+    decision_style = {
+        "APPROVED": st.success,
+        "REJECTED": st.error,
+    }.get(result.decision, st.warning)
 
+    decision_style(f"Decision: **{result.decision}**  |  Risk: **{result.risk_level}**")
 
-    if "APPROVED" in response.upper():
+    m1, m2, m3, m4 = st.columns(4)
 
-        decision = "APPROVED"
+    m1.metric("Estimated EMI", f"₹{result.emi:,.0f}")
+    m2.metric("FOIR", f"{result.foir:.0%}")
+    m3.metric("Rate (ref.)", f"{result.interest_rate:.2f}%")
+    m4.metric("Max at 50% FOIR", f"₹{result.max_eligible_amount:,.0f}")
 
+    st.subheader("Policy Checks")
 
-    elif "REJECTED" in response.upper():
+    for check in result.checks:
+        icon = "✅" if check.passed else "⚠️"
+        st.write(f"{icon} **{check.name}** - {check.detail}")
 
-        decision = "REJECTED"
+    st.subheader("Explanation")
 
+    st.write(outcome["explanation"])
 
-
-    # ---------------------------------
-    # Save Decision
-    # ---------------------------------
-
-    save_decision(
-
-        application_id,
-
-        customer_id,
-
-        decision,
-
-        fraud_status,
-
-        response,
-
-    )
-
-
-
-    # ---------------------------------
-    # Update Loan Application
-    # ---------------------------------
-
-    update_loan_status(
-
-        application_id,
-
-        decision
-
-    )
-
-
-    update_risk_level(
-
-        application_id,
-
-        fraud_status
-
-    )
-
-
-
-    st.success(
-        "Analysis Completed"
-    )
-
-
-    st.subheader(
-        "AI Recommendation"
-    )
-
-
-    st.write(
-        response
-    )
-
-
-    st.success(
-        f"Loan Status Updated : {decision}"
+    st.page_link(
+        "pages/8_Loan_Report.py",
+        label="Generate Loan Report",
+        icon="📄",
     )

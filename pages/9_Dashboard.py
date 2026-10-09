@@ -1,6 +1,8 @@
 import streamlit as st
 import pandas as pd
 
+from utils.session import require_staff
+
 from database.dashboard_repository import (
     get_dashboard_stats,
     get_recent_applications,
@@ -11,6 +13,8 @@ st.set_page_config(
     page_icon="📊",
     layout="wide",
 )
+
+require_staff()
 
 st.title("📊 AI Loan Management Dashboard")
 
@@ -67,7 +71,7 @@ rows = get_recent_applications()
 
 if rows:
 
-    df = pd.DataFrame(rows)
+    df = pd.DataFrame([dict(row) for row in rows])
 
     st.dataframe(
         df,

@@ -1,8 +1,11 @@
+import logging
+
 from langchain_core.tools import tool
 from langchain_core.runnables import RunnableConfig
 
 from langchain_app.context import AgentContext
 
+from database.authorization_repository import is_application_authorized
 from database.customer_repository import get_customer_by_id
 from database.loan_repository import get_loan_by_application
 from database.ocr_repository import get_ocr_results
@@ -11,36 +14,10 @@ from database.fraud_repository import get_fraud_result
 from database.decision_repository import get_decision
 
 from langchain_app.chains import ask_policy
+from utils.masking import mask_aadhaar, mask_pan, mask_phone
 
 
-# ============================================================
-# Temporary Context Support
-# ============================================================
-
-_current_context: AgentContext | None = None
-
-
-def set_context(context: AgentContext):
-    """
-    Store agent context for backward compatibility.
-
-    RuntimeConfig is the preferred mechanism.
-    """
-    global _current_context
-    _current_context = context
-
-
-def get_context() -> AgentContext:
-    """
-    Return the currently stored context.
-    """
-
-    if _current_context is None:
-        raise RuntimeError(
-            "Agent context is not initialized."
-        )
-
-    return _current_context
+logger = logging.getLogger(__name__)
 
 
 # ============================================================
@@ -62,32 +39,30 @@ def get_context_from_config(
         }
     }
 
-    Falls back to the temporary global context if required.
+    The IDs come from the authenticated Streamlit session, never from
+    the LLM. There is deliberately no global fallback: a module-level
+    "current context" would be shared by every concurrent session.
     """
 
-    if config:
+    configurable = (config or {}).get("configurable", {})
 
-        configurable = config.get(
-            "configurable",
-            {},
+    customer_id = configurable.get("customer_id")
+    application_id = configurable.get("application_id")
+
+    if not customer_id or not application_id:
+        raise PermissionError(
+            "Authenticated customer context is missing."
         )
 
-        customer_id = configurable.get(
-            "customer_id"
+    if not is_application_authorized(application_id, customer_id):
+        raise PermissionError(
+            "Application does not belong to the authenticated customer."
         )
 
-        application_id = configurable.get(
-            "application_id"
-        )
-
-        if customer_id and application_id:
-
-            return AgentContext(
-                customer_id=customer_id,
-                application_id=application_id,
-            )
-
-    return get_context()
+    return AgentContext(
+        customer_id=customer_id,
+        application_id=application_id,
+    )
 
 
 # ============================================================
@@ -125,59 +100,14 @@ def customer_information(
             "Customer information was not found."
         )
 
-    phone = customer["phone"] or ""
-    pan = customer["pan"] or ""
-    aadhaar = customer["aadhaar"] or ""
-
-    # --------------------------------------------------------
-    # Mask phone
-    # --------------------------------------------------------
-
-    if len(phone) >= 4:
-        masked_phone = (
-            "*" * (len(phone) - 4)
-            + phone[-4:]
-        )
-    else:
-        masked_phone = "****"
-
-    # --------------------------------------------------------
-    # Mask PAN
-    # Example:
-    # BZGPM5154B -> BZGPM**B
-    # --------------------------------------------------------
-
-    if len(pan) >= 6:
-        masked_pan = (
-            pan[:5]
-            + "*" * (len(pan) - 6)
-            + pan[-1:]
-        )
-    else:
-        masked_pan = "******"
-
-    # --------------------------------------------------------
-    # Mask Aadhaar
-    # Example:
-    # 834688652621 -> ********2621
-    # --------------------------------------------------------
-
-    if len(aadhaar) >= 4:
-        masked_aadhaar = (
-            "*" * (len(aadhaar) - 4)
-            + aadhaar[-4:]
-        )
-    else:
-        masked_aadhaar = "********"
-
     return (
         "Customer Information\n\n"
         f"Customer ID: {customer['customer_id']}\n"
         f"Name: {customer['full_name']}\n"
         f"Email: {customer['email']}\n"
-        f"Phone: {masked_phone}\n"
-        f"PAN: {masked_pan}\n"
-        f"Aadhaar: {masked_aadhaar}\n"
+        f"Phone: {mask_phone(customer['phone'])}\n"
+        f"PAN: {mask_pan(customer['pan'])}\n"
+        f"Aadhaar: {mask_aadhaar(customer['aadhaar'])}\n"
         f"Date of Birth: {customer['date_of_birth']}"
     )
 
@@ -217,6 +147,7 @@ def loan_information(
         f"Loan Type: {loan['loan_type']}\n"
         f"Loan Amount: ₹{loan['loan_amount']:,.0f}\n"
         f"Monthly Income: ₹{loan['monthly_income']:,.0f}\n"
+        f"Tenure: {loan['tenure_months'] or '-'} months\n"
         f"Credit Score: {loan['credit_score']}\n"
         f"Application Status: {loan['application_status']}\n"
         f"Risk Level: {loan['risk_level']}"
@@ -251,10 +182,10 @@ def ocr_information(
         output.append(
             f"Document Type: {row['document_type']}\n"
             f"Extracted Name: {row['extracted_name']}\n"
-            f"PAN: {row['extracted_pan']}\n"
-            f"Aadhaar: {row['extracted_aadhaar']}\n"
+            f"PAN: {mask_pan(row['extracted_pan'])}\n"
+            f"Aadhaar: {mask_aadhaar(row['extracted_aadhaar'])}\n"
             f"DOB: {row['extracted_dob']}\n"
-            f"Confidence: {row['confidence']:.2f}%"
+            f"Confidence: {row['confidence'] or 0:.2f}%"
         )
 
     return "\n\n".join(output)
@@ -326,18 +257,12 @@ def fraud_information(
 
     context = get_context_from_config(config)
 
-    # IMPORTANT:
-    # Use application_id from authenticated RuntimeConfig.
-    # Do not attempt to obtain customer_id from the
-    # fraud result itself.
-    application_id = context.application_id
-
     fraud = get_fraud_result(
-        application_id
+        context.application_id
     )
 
     if not fraud:
-        return "Fraud analysis result not found."
+        return "Fraud analysis has not been run for this application yet."
 
     return (
         f"Fraud Status: {fraud['fraud_status']}\n"
@@ -421,12 +346,13 @@ def loan_policy(
 
         return str(result)
 
-    except Exception as exc:
+    except Exception:
+
+        logger.exception("Loan policy RAG failed")
 
         return (
             "Unable to retrieve loan policy "
             "information at this time."
-            f"\nTechnical details: {exc}"
         )
 
 

@@ -30,14 +30,14 @@ def get_dashboard_stats():
     cursor.execute("""
         SELECT COUNT(*)
         FROM loan_applications
-        WHERE application_status='MANUAL REVIEW'
+        WHERE application_status IN ('MANUAL_REVIEW', 'MANUAL REVIEW')
     """)
     manual_review = cursor.fetchone()[0]
 
-    # Fraud
+    # Fraud - applications the fraud engine scored as HIGH risk
     cursor.execute("""
         SELECT COUNT(*)
-        FROM loan_applications
+        FROM fraud_results
         WHERE risk_level='HIGH'
     """)
     fraud = cursor.fetchone()[0]

@@ -1,28 +1,23 @@
-import os
-
 from langchain_community.document_loaders import TextLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_community.vectorstores import FAISS
+from config import KNOWLEDGE_BASE_PATH, VECTOR_DB_PATH
 from langchain_app.embeddings import embeddings
-
-
-KNOWLEDGE_PATH = "knowledge_base"
 
 
 def build_vector_store():
 
     documents = []
 
-    for filename in os.listdir(KNOWLEDGE_PATH):
+    # sorted() keeps the index build reproducible across platforms.
+    for path in sorted(KNOWLEDGE_BASE_PATH.glob("*.txt")):
 
-        if filename.endswith(".txt"):
+        loader = TextLoader(
+            str(path),
+            encoding="utf-8",
+        )
 
-            loader = TextLoader(
-                os.path.join(KNOWLEDGE_PATH, filename),
-                encoding="utf-8",
-            )
-
-            documents.extend(loader.load())
+        documents.extend(loader.load())
 
     splitter = RecursiveCharacterTextSplitter(
         chunk_size=500,
@@ -39,6 +34,6 @@ def build_vector_store():
         embeddings,
     )
 
-    vector_db.save_local("faiss_index")
+    vector_db.save_local(str(VECTOR_DB_PATH))
 
     return vector_db

@@ -17,9 +17,10 @@ def save_loan(loan):
             monthly_income,
             credit_score,
             application_status,
-            risk_level
+            risk_level,
+            tenure_months
         )
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
         """,
         (
             loan["application_id"],
@@ -30,6 +31,7 @@ def save_loan(loan):
             loan["credit_score"],
             loan["application_status"],
             loan["risk_level"],
+            loan.get("tenure_months"),
         ),
     )
 

@@ -2,17 +2,26 @@ import streamlit as st
 import pandas as pd
 
 from database.history_repository import get_customer_loan_history
+from utils.session import is_staff, require_login
 
 st.set_page_config(
     page_title="Loan History",
     page_icon="📋",
 )
 
+require_login()
+
 st.title("📋 Customer Loan History")
 
-customer_id = st.text_input("Customer ID")
+if is_staff():
+    customer_id = st.text_input("Customer ID").strip()
+    search = st.button("Search")
+else:
+    # Customers can only ever see their own history.
+    customer_id = st.session_state.get("customer_id")
+    search = True
 
-if st.button("Search"):
+if search:
 
     if not customer_id:
         st.warning("Enter Customer ID")

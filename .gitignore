@@ -1,29 +1,31 @@
 # Environment variables
 .env
 
-# Python virtual environment
+# Python virtual environments
 .venv/
+venv/
+mcp_env/
 
-# Python cache
+# Python cache / tooling
 __pycache__/
 *.pyc
+.pytest_cache/
 
 # Database
 *.db
 *.sqlite3
 
-# VS Code
+# Editors
 .vscode/
+.idea/
 
 # Generated files
 reports/
 uploads/
+temp/
+*.log
 
-# Personal documents
-pan.png
-aadhar.png
 # Personal / sensitive documents
 pan.png
 aadhar.png
 aadhaar.png
-temp/

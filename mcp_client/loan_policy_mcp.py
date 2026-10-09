@@ -1,4 +1,6 @@
+import asyncio
 import os
+import sys
 
 from langchain_mcp_adapters.client import MultiServerMCPClient
 
@@ -19,17 +21,17 @@ MCP_SERVER_FILE = os.path.join(
     "loan_policy_server.py",
 )
 
+# Launch the server with the same interpreter as the app, so it
+# works on Windows, macOS, Linux and inside any virtual environment.
+# MCP_PYTHON can override it (e.g. a dedicated MCP environment).
+MCP_PYTHON = os.getenv("MCP_PYTHON", sys.executable)
 
-# ============================================================
-# MCP ENVIRONMENT PYTHON
-# ============================================================
-
-MCP_PYTHON = os.path.join(
-    BASE_DIR,
-    "mcp_env",
-    "Scripts",
-    "python.exe",
-)
+POLICY_TOOLS = {
+    "get_car_loan_ltv",
+    "get_car_loan_tenure",
+    "get_eligible_car_vehicles",
+    "search_loan_policy",
+}
 
 
 # ============================================================
@@ -40,14 +42,8 @@ client = MultiServerMCPClient(
     {
         "loan_policy": {
             "transport": "stdio",
-
-            # Launch the MCP server directly using
-            # the Python executable from mcp_env.
             "command": MCP_PYTHON,
-
-            # IMPORTANT:
-            # Do NOT use "-m mcp run" here.
-            # LangChain stdio should launch the Python file directly.
+            # Launch the Python file directly (not "-m mcp run").
             "args": [
                 MCP_SERVER_FILE,
             ],
@@ -57,7 +53,7 @@ client = MultiServerMCPClient(
 
 
 # ============================================================
-# LOAD MCP TOOLS
+# TOOLS
 # ============================================================
 
 async def get_loan_policy_tools():
@@ -65,131 +61,49 @@ async def get_loan_policy_tools():
     Load all tools exposed by the Loan Policy MCP Server.
     """
 
-    tools = await client.get_tools()
-
-    return tools
+    return await client.get_tools()
 
 
-# ============================================================
-# FIND MCP TOOL
-# ============================================================
-
-async def get_loan_policy_tool(
+async def call_policy_tool(
     tool_name: str,
+    question: str = "",
 ):
     """
-    Return a specific tool from the Loan Policy MCP Server.
+    Call one Loan Policy MCP tool by name.
     """
+
+    if tool_name not in POLICY_TOOLS:
+        raise ValueError(f"Unknown MCP policy tool '{tool_name}'.")
 
     tools = await get_loan_policy_tools()
 
-    for tool in tools:
-
-        if tool.name == tool_name:
-            return tool
-
-    raise RuntimeError(
-        f"MCP tool '{tool_name}' was not found."
+    tool = next(
+        (tool for tool in tools if tool.name == tool_name),
+        None,
     )
 
+    if tool is None:
+        raise RuntimeError(
+            f"MCP tool '{tool_name}' was not found."
+        )
 
-# ============================================================
-# CAR LOAN LTV
-# ============================================================
-
-async def get_car_loan_ltv():
-    """
-    Retrieve maximum car-loan LTV through MCP.
-    """
-
-    tool = await get_loan_policy_tool(
-        "get_car_loan_ltv"
+    arguments = (
+        {"question": question}
+        if tool_name == "search_loan_policy"
+        else {}
     )
 
-    return await tool.ainvoke({})
+    return await tool.ainvoke(arguments)
 
 
-# ============================================================
-# CAR LOAN TENURE
-# ============================================================
-
-async def get_car_loan_tenure():
-    """
-    Retrieve car-loan tenure through MCP.
-    """
-
-    tool = await get_loan_policy_tool(
-        "get_car_loan_tenure"
-    )
-
-    return await tool.ainvoke({})
-
-
-# ============================================================
-# ELIGIBLE VEHICLES
-# ============================================================
-
-async def get_eligible_car_vehicles():
-    """
-    Retrieve eligible car vehicles through MCP.
-    """
-
-    tool = await get_loan_policy_tool(
-        "get_eligible_car_vehicles"
-    )
-
-    return await tool.ainvoke({})
-
-
-# ============================================================
-# POLICY SEARCH
-# ============================================================
-
-async def search_loan_policy(
-    question: str,
+def call_policy_tool_sync(
+    tool_name: str,
+    question: str = "",
 ):
     """
-    Search the loan policy knowledge base through MCP.
+    Synchronous wrapper for Streamlit (which has no running loop).
     """
 
-    tool = await get_loan_policy_tool(
-        "search_loan_policy"
-    )
-
-    return await tool.ainvoke(
-        {
-            "question": question
-        }
-    )
-
-# ============================================================
-# SYNCHRONOUS MCP WRAPPERS
-# ============================================================
-
-import asyncio
-
-
-def get_car_loan_ltv_sync():
     return asyncio.run(
-        get_car_loan_ltv()
-    )
-
-
-def get_car_loan_tenure_sync():
-    return asyncio.run(
-        get_car_loan_tenure()
-    )
-
-
-def get_eligible_car_vehicles_sync():
-    return asyncio.run(
-        get_eligible_car_vehicles()
-    )
-
-
-def search_loan_policy_sync(
-    question: str,
-):
-    return asyncio.run(
-        search_loan_policy(question)
+        call_policy_tool(tool_name, question)
     )

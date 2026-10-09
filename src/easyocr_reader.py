@@ -1,14 +1,24 @@
-import easyocr
+from functools import lru_cache
 
-reader = easyocr.Reader(
-    ['en'],
-    gpu=False
-)
+
+@lru_cache(maxsize=1)
+def get_reader():
+    """
+    EasyOCR downloads and loads a model, so create it only when the
+    Tesseract result is weak enough to need the fallback.
+    """
+
+    import easyocr
+
+    return easyocr.Reader(
+        ['en'],
+        gpu=False
+    )
 
 
 def perform_easyocr(image):
 
-    results = reader.readtext(image)
+    results = get_reader().readtext(image)
 
     text = ""
 

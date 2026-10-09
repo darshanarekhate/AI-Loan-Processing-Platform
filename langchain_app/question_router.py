@@ -1,175 +1,190 @@
-from enum import Enum
+"""
+Deterministic question router for the AI Loan Assistant.
+
+Simple factual questions are answered straight from the database or
+the policy MCP server without spending LLM tokens; anything that
+needs reasoning returns None and goes through LangGraph + Groq.
+
+Pure module (no LLM / database imports) so it is unit-testable.
+"""
+
+import re
 
 
-class QuestionType(str, Enum):
-    CUSTOMER = "customer"
-    LOAN = "loan"
-    KYC = "kyc"
-    FRAUD = "fraud"
-    DECISION = "decision"
-    OCR = "ocr"
-    POLICY = "policy"
-    GENERAL = "general"
+# Checked FIRST: these need actual reasoning.
+REASONING_KEYWORDS = [
+    "why",
+    "explain",
+    "based on",
+    "analyse",
+    "analyze",
+    "analysis",
+    "assess",
+    "assessment",
+    "evaluate",
+    "evaluation",
+    "compare",
+    "comparison",
+    "impact",
+    "affect",
+    "affects",
+    "effect",
+    "recommend",
+    "recommendation",
+    "should i",
+    "would i",
+    "could i",
+    "how can i improve",
+    "what does this mean",
+    "what does that mean",
+    "how does this affect",
+    "how will this affect",
+    "what are the implications",
+]
+
+# General policy questions that mention a customer-data keyword
+# (e.g. "What documents are required for KYC?") must go to policy.
+POLICY_FIRST_KEYWORDS = [
+    "documents required",
+    "required documents",
+    "documents are required",
+    "what documents",
+    "which documents",
+    "kyc guidelines",
+    "kyc process",
+    "kyc policy",
+    "fraud policy",
+]
+
+ROUTE_KEYWORDS = [
+    (
+        "customer",
+        [
+            "customer information",
+            "customer details",
+            "profile details",
+            "my profile",
+            "my name",
+            "my email",
+            "my phone",
+            "my pan",
+            "my aadhaar",
+            "my date of birth",
+            "my dob",
+        ],
+    ),
+    (
+        "kyc",
+        [
+            "kyc",
+            "identity verification",
+            "pan verification",
+            "aadhaar verification",
+        ],
+    ),
+    (
+        "fraud",
+        [
+            "fraud",
+            "fraudulent",
+            "suspicious activity",
+        ],
+    ),
+    (
+        "ai_decision",
+        [
+            "ai decision",
+            "loan decision",
+            "approval reason",
+            "rejection reason",
+            "loan recommendation",
+        ],
+    ),
+    (
+        "ocr",
+        [
+            "ocr",
+            "extracted data",
+            "extracted document",
+            "scanned document",
+            "extracted pan",
+            "extracted aadhaar",
+            "extracted name",
+            "extracted dob",
+        ],
+    ),
+    (
+        "loan",
+        [
+            "loan amount",
+            "loan type",
+            "monthly income",
+            "credit score",
+            "loan status",
+            "application status",
+            "risk level",
+            "my tenure",
+            "loan details",
+        ],
+    ),
+    (
+        "policy",
+        [
+            "eligibility",
+            "eligible",
+            "interest rate",
+            "emi",
+            "tenure",
+            "down payment",
+            "ltv",
+            "loan to value",
+            "loan-to-value",
+            "loan policy",
+            "bank policy",
+            "loan requirements",
+            "car loan",
+            "home loan",
+            "personal loan",
+            "education loan",
+        ],
+    ),
+]
 
 
-def classify_question(question: str) -> QuestionType:
+def _contains(text: str, keywords) -> bool:
     """
-    Classify common loan-assistant questions without using an LLM.
+    Whole-word / whole-phrase match, so "emi" does not match "remind".
+    """
 
-    This deterministic router is intentionally simple and predictable.
-    Customer/application-specific queries should not consume Gemini quota.
+    return any(
+        re.search(rf"\b{re.escape(keyword)}\b", text)
+        for keyword in keywords
+    )
+
+
+def detect_route(question: str) -> str | None:
+    """
+    Return the direct route for a question, or None when the question
+    needs LLM reasoning.
+
+    Example:
+        "What is my credit score?"               -> "loan"
+        "Based on my credit score, should I..."  -> None (LLM)
     """
 
     q = question.lower().strip()
 
-    # ---------------------------------------------------------
-    # Customer information
-    # ---------------------------------------------------------
+    if not q:
+        return None
 
-    customer_keywords = [
-        "customer information",
-        "customer details",
-        "customer profile",
-        "my profile",
-        "my details",
-        "my name",
-        "my email",
-        "my phone",
-        "my pan",
-        "my aadhaar",
-        "my address",
-        "date of birth",
-        "dob",
-    ]
+    if _contains(q, REASONING_KEYWORDS):
+        return None
 
-    if any(keyword in q for keyword in customer_keywords):
-        return QuestionType.CUSTOMER
+    if _contains(q, POLICY_FIRST_KEYWORDS):
+        return "policy"
 
-    # ---------------------------------------------------------
-    # KYC
-    # ---------------------------------------------------------
+    for route, keywords in ROUTE_KEYWORDS:
+        if _contains(q, keywords):
+            return route
 
-    kyc_keywords = [
-        "kyc",
-        "kyc status",
-        "kyc verification",
-        "identity verification",
-        "identity verified",
-        "pan verification",
-        "aadhaar verification",
-        "verification status",
-        "is my identity verified",
-    ]
-
-    if any(keyword in q for keyword in kyc_keywords):
-        return QuestionType.KYC
-
-    # ---------------------------------------------------------
-    # Fraud
-    # ---------------------------------------------------------
-
-    fraud_keywords = [
-        "fraud",
-        "fraud status",
-        "fraud score",
-        "fraud risk",
-        "fraud detection",
-        "fraud analysis",
-        "suspicious activity",
-    ]
-
-    if any(keyword in q for keyword in fraud_keywords):
-        return QuestionType.FRAUD
-
-    # ---------------------------------------------------------
-    # AI loan decision
-    # ---------------------------------------------------------
-
-    decision_keywords = [
-        "why was my loan approved",
-        "why was my loan rejected",
-        "why is my loan approved",
-        "why is my loan rejected",
-        "approval reason",
-        "rejection reason",
-        "loan decision",
-        "ai decision",
-        "decision reason",
-        "why approved",
-        "why rejected",
-    ]
-
-    if any(keyword in q for keyword in decision_keywords):
-        return QuestionType.DECISION
-
-    # ---------------------------------------------------------
-    # OCR
-    # ---------------------------------------------------------
-
-    ocr_keywords = [
-        "ocr",
-        "ocr result",
-        "ocr results",
-        "extracted document",
-        "extracted data",
-        "document extraction",
-        "scanned document",
-        "what was extracted",
-    ]
-
-    if any(keyword in q for keyword in ocr_keywords):
-        return QuestionType.OCR
-
-    # ---------------------------------------------------------
-    # Loan information
-    # ---------------------------------------------------------
-
-    loan_keywords = [
-        "loan amount",
-        "loan type",
-        "loan status",
-        "loan application",
-        "application status",
-        "credit score",
-        "monthly income",
-        "risk level",
-        "my loan",
-        "complete loan details",
-        "loan details",
-    ]
-
-    if any(keyword in q for keyword in loan_keywords):
-        return QuestionType.LOAN
-
-    # ---------------------------------------------------------
-    # General loan policy
-    # ---------------------------------------------------------
-
-    policy_keywords = [
-        "eligibility",
-        "eligible",
-        "interest rate",
-        "interest rates",
-        "emi",
-        "tenure",
-        "loan tenure",
-        "down payment",
-        "ltv",
-        "loan to value",
-        "required documents",
-        "documents required",
-        "loan requirements",
-        "minimum income",
-        "car loan eligibility",
-        "home loan eligibility",
-        "personal loan eligibility",
-    ]
-
-    if any(keyword in q for keyword in policy_keywords):
-        return QuestionType.POLICY
-
-    # ---------------------------------------------------------
-    # Default
-    # ---------------------------------------------------------
-
-    return QuestionType.GENERAL
+    return None

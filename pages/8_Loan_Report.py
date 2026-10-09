@@ -1,22 +1,26 @@
 import os
+
 import streamlit as st
 
-from reports.loan_report import generate_report
-
+from database.customer_repository import get_customer_by_id
 from database.decision_repository import get_decision
-from src.fraud_agent import fraud_check
+from database.fraud_repository import get_fraud_result
 from database.kyc_result_repository import get_kyc_result
+from database.loan_repository import get_loan_by_application
+from services.report_service import generate_report
+from utils.session import require_staff
 
 st.set_page_config(
     page_title="Loan Report",
     page_icon="📄",
 )
 
+require_staff()
+
 st.title("📄 AI Loan Assessment Report")
 
 application_id = st.session_state.get("application_id")
 customer_id = st.session_state.get("customer_id")
-kyc_result = get_kyc_result(application_id)
 
 if not application_id or not customer_id:
     st.error("No application selected.")
@@ -28,18 +32,11 @@ if not kyc_result:
     st.error("Please complete KYC Verification first.")
     st.stop()
 
-kyc_result = dict(kyc_result)
-
 decision = get_decision(application_id)
 
 if not decision:
     st.error("Please complete AI Loan Decision first.")
     st.stop()
-
-fraud_result = fraud_check(
-    application_id,
-    customer_id,
-)
 
 st.subheader("Loan Summary")
 
@@ -54,10 +51,11 @@ if st.button("📄 Generate Loan Report"):
 
     pdf_path = generate_report(
         application_id=application_id,
-        customer_id=customer_id,
+        customer=get_customer_by_id(customer_id),
+        loan=get_loan_by_application(application_id),
         kyc_result=kyc_result,
-        fraud_result=fraud_result,
-        ai_decision=decision["explanation"],
+        fraud_result=get_fraud_result(application_id),
+        decision=decision,
     )
 
     st.success("Loan report generated successfully.")

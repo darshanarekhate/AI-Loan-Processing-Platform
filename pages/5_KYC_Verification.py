@@ -1,12 +1,15 @@
 import streamlit as st
 
 from services.kyc_service import verify_kyc
+from utils.session import require_staff
 
 st.set_page_config(
     page_title="KYC Verification",
     page_icon="🪪",
     layout="wide"
 )
+
+require_staff()
 
 st.title("🪪 AI KYC Verification")
 
@@ -26,11 +29,11 @@ st.info(f"Application ID : {application_id}")
 # Initialize Session State
 # -------------------------------------------------------
 
-if "kyc_result" not in st.session_state:
+# Results belong to one application; reset when another is selected.
+if st.session_state.get("kyc_application_id") != application_id:
     st.session_state["kyc_result"] = None
-
-if "kyc_status" not in st.session_state:
     st.session_state["kyc_status"] = None
+    st.session_state["kyc_application_id"] = application_id
 
 # -------------------------------------------------------
 # Start KYC Verification

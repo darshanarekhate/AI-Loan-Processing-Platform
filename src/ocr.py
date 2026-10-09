@@ -1,16 +1,17 @@
-import cv2
-import sqlite3
+import logging
 import re
-from matplotlib import lines
+
 import pytesseract
 
 from pytesseract import Output
 
-from config import DATABASE_PATH
 from config import TESSERACT_PATH
 from src.easyocr_reader import perform_easyocr
 
-pytesseract.pytesseract.tesseract_cmd = TESSERACT_PATH
+logger = logging.getLogger(__name__)
+
+if TESSERACT_PATH:
+    pytesseract.pytesseract.tesseract_cmd = TESSERACT_PATH
 
 
 def perform_ocr(image, document_type="PAN"):
@@ -31,12 +32,6 @@ def perform_ocr(image, document_type="PAN"):
 
     for config in configs:
 
-        print(f"Running OCR with {config}")
-
-        print("Image Shape:", image.shape)
-        print("Image Type:", image.dtype)
-
-        print("Before image_to_string")
 
         text = pytesseract.image_to_string(
             image,
@@ -45,7 +40,6 @@ def perform_ocr(image, document_type="PAN"):
             timeout=20
         )
 
-        print("After image_to_string")
 
         data = pytesseract.image_to_data(
             image,
@@ -69,11 +63,11 @@ def perform_ocr(image, document_type="PAN"):
             2
         ) if confidences else 0.0
 
-        print(f"PSM: {config} -> Confidence: {avg_conf}")
+        logger.debug("Tesseract %s -> confidence %s", config, avg_conf)
 
         # Exit early if confidence is excellent
         if avg_conf >= 70:
-            print("High confidence achieved. Skipping remaining configs.")
+            logger.debug("High confidence achieved; skipping remaining configs")
             best_text = text
             best_conf = avg_conf
             break
@@ -83,18 +77,18 @@ def perform_ocr(image, document_type="PAN"):
             best_conf = avg_conf
             best_text = text
 
-    print("Best Tesseract Confidence:", best_conf)
+    logger.debug("Best Tesseract confidence: %s", best_conf)
 
     # EasyOCR fallback threshold
     threshold = 50 if document_type == "AADHAAR" else 60
 
     if best_conf < threshold:
 
-        print("Trying EasyOCR...")
+        logger.debug("Low confidence; trying EasyOCR")
 
         easy_text, easy_conf = perform_easyocr(image)
 
-        print("EasyOCR Confidence:", easy_conf)
+        logger.debug("EasyOCR confidence: %s", easy_conf)
 
         if easy_conf > best_conf:
             return easy_text, easy_conf
@@ -251,47 +245,6 @@ def extract_pan_details(ocr_text):
         "DOB": dob
 
     }
-
-def save_ocr_result(
-    document_id,
-    number,
-    confidence,
-    name,
-    father,
-    dob
-):
-
-    conn = sqlite3.connect(
-    DATABASE_PATH,
-    check_same_thread=False
-    )
-
-    cursor = conn.cursor()
-
-    cursor.execute(
-        """
-        UPDATE documents
-        SET
-            extracted_number=?,
-            ocr_confidence=?,
-            name=?,
-            father_name=?,
-            dob=?
-        WHERE id=?
-        """,
-        (
-            number,
-            confidence,
-            name,
-            father,
-            dob,
-            document_id
-        )
-    )
-
-    conn.commit()
-    conn.close()
-
 
 def extract_aadhaar_details(ocr_text):
 
@@ -464,10 +417,10 @@ def extract_aadhaar_details(ocr_text):
 
     return {
 
-        "AADHAAR": aadhaar if aadhaar else "Not Found",
+        "AADHAAR": aadhaar,
 
-        "NAME": name if name else "Not Found",
+        "NAME": name,
 
-        "DOB": dob if dob else "Not Found"
+        "DOB": dob
 
     }

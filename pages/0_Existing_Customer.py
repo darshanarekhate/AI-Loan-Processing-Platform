@@ -3,7 +3,18 @@ import streamlit as st
 from database.customer_repository import get_customer_by_pan
 from database.loan_repository import get_loans_by_customer
 from database.document_repository import get_documents_by_application
+from utils.masking import mask_aadhaar, mask_phone
+from utils.session import require_staff
+from utils.validators import is_valid_pan, normalize_pan
 
+
+st.set_page_config(
+    page_title="Existing Customer",
+    page_icon="👤",
+    layout="wide",
+)
+
+require_staff()
 
 st.title("👤 Existing Customer")
 
@@ -11,7 +22,19 @@ pan = st.text_input("Enter PAN Number")
 
 if st.button("Find Customer"):
 
+    pan = normalize_pan(pan)
+
+    if not is_valid_pan(pan):
+        st.session_state.pop("searched_customer", None)
+        st.error("Enter a valid PAN (e.g. ABCPE1234F).")
+        st.stop()
+
     customer = get_customer_by_pan(pan)
+
+    if customer is None:
+        st.session_state.pop("searched_customer", None)
+        st.error("Customer not found.")
+        st.stop()
 
     st.session_state["searched_customer"] = dict(customer)
 
@@ -24,7 +47,8 @@ if customer:
     st.write(f"### 👤 {customer['full_name']}")
     st.write(f"Customer ID : {customer['customer_id']}")
     st.write(f"Email : {customer['email']}")
-    st.write(f"Phone : {customer['phone']}")
+    st.write(f"Phone : {mask_phone(customer['phone'])}")
+    st.write(f"Aadhaar : {mask_aadhaar(customer['aadhaar'])}")
 
     st.session_state["customer_id"] = customer["customer_id"]
 
@@ -38,58 +62,40 @@ if customer:
 
         for loan in loans:
 
-            with st.container():
+            with st.container(border=True):
 
-                st.info(
+                st.markdown(
                     f"""
-                Application ID : {loan['application_id']}
-
-                Loan Type : {loan['loan_type']}
-
-                Loan Amount : ₹{loan['loan_amount']:,.2f}
-
-                Monthly Income : ₹{loan['monthly_income']:,.2f}
-
-                Credit Score : {loan['credit_score']}
-
-                Status : {loan['application_status']}
-
-                Risk Level : {loan['risk_level']}
-                """
+**Application ID:** {loan['application_id']}
+**Loan Type:** {loan['loan_type']}
+**Loan Amount:** ₹{loan['loan_amount']:,.2f}
+**Monthly Income:** ₹{loan['monthly_income']:,.2f}
+**Credit Score:** {loan['credit_score']}
+**Status:** {loan['application_status']}
+**Risk Level:** {loan['risk_level']}
+"""
                 )
 
-                col1, col2 = st.columns(2)
+                if st.button("Continue", key=loan["application_id"]):
 
-                with col1:
+                    st.session_state["customer_id"] = customer["customer_id"]
+                    st.session_state["application_id"] = loan["application_id"]
 
-                        if st.button("Continue", key=loan["application_id"]):
+                    documents = get_documents_by_application(loan["application_id"])
 
-                            st.session_state["customer_id"] = customer["customer_id"]
-                            st.session_state["application_id"] = loan["application_id"]
-
-                            documents = get_documents_by_application(loan["application_id"])
-
-                            if documents:
-                                st.switch_page("pages/4_OCR_Processing.py")
-                            else:
-                                st.switch_page("pages/3_upload_documents.py")
-
-                with col2:
-
-                        st.write("")
+                    if documents:
+                        st.switch_page("pages/4_OCR_Processing.py")
+                    else:
+                        st.switch_page("pages/3_upload_documents.py")
 
     else:
 
         st.warning("No previous loan applications found.")
 
-        st.divider()
+    st.divider()
 
-        if st.button("➕ Create New Loan Application"):
+    if st.button("➕ Create New Loan Application"):
 
-            st.session_state.pop("application_id", None)
+        st.session_state.pop("application_id", None)
 
-            st.switch_page("pages/2_loan_application.py")
-
-        else:
-
-            st.error("Customer not found.")
+        st.switch_page("pages/2_loan_application.py")

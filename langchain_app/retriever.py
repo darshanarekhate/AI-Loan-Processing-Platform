@@ -1,14 +1,15 @@
 from langchain_community.vectorstores import FAISS
 
+from config import VECTOR_DB_PATH
 from langchain_app.embeddings import embeddings
-
-VECTOR_DB_PATH = "faiss_index"
 
 
 def get_retriever():
 
+    # The index is built locally by build_vector_db.py; FAISS stores
+    # its docstore with pickle, so only load an index you created.
     vector_db = FAISS.load_local(
-        VECTOR_DB_PATH,
+        str(VECTOR_DB_PATH),
         embeddings,
         allow_dangerous_deserialization=True,
     )

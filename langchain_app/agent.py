@@ -1,3 +1,6 @@
+import logging
+from functools import lru_cache
+
 from langgraph.graph import StateGraph, END
 from langgraph.prebuilt import ToolNode
 
@@ -5,15 +8,11 @@ from langchain_core.messages import SystemMessage
 from langchain_core.runnables import RunnableConfig
 
 from langchain_app.state import AgentState
-from langchain_app.llm import llm
+from langchain_app.llm import get_llm
 from langchain_app.agent_tools import AGENT_TOOLS
 
 
-# =========================================================
-# Bind Tools
-# =========================================================
-
-llm_with_tools = llm.bind_tools(AGENT_TOOLS)
+logger = logging.getLogger(__name__)
 
 
 # =========================================================
@@ -120,21 +119,18 @@ def agent_node(
         *state["messages"],
     ]
 
+    llm_with_tools = get_llm().bind_tools(AGENT_TOOLS)
+
     response = llm_with_tools.invoke(
         messages,
         config=config,
     )
 
-    print("\n==============================")
-    print("AGENT NODE")
-    print("==============================")
-
     if getattr(response, "tool_calls", None):
-        print("TOOL CALLS:")
-        print(response.tool_calls)
-
-    print("MODEL RESPONSE:")
-    print(response)
+        logger.info(
+            "Agent tool calls: %s",
+            [call["name"] for call in response.tool_calls],
+        )
 
     return {
         "messages": [response]
@@ -166,26 +162,27 @@ def should_continue(state: AgentState):
 # Build Graph
 # =========================================================
 
-graph = StateGraph(AgentState)
+@lru_cache(maxsize=1)
+def get_agent():
+    """
+    Compile the LangGraph agent once, on first use.
+    """
 
-graph.add_node("agent", agent_node)
-graph.add_node("tools", tool_node)
+    graph = StateGraph(AgentState)
 
-graph.set_entry_point("agent")
+    graph.add_node("agent", agent_node)
+    graph.add_node("tools", tool_node)
 
-graph.add_conditional_edges(
-    "agent",
-    should_continue,
-)
+    graph.set_entry_point("agent")
 
-graph.add_edge(
-    "tools",
-    "agent",
-)
+    graph.add_conditional_edges(
+        "agent",
+        should_continue,
+    )
 
+    graph.add_edge(
+        "tools",
+        "agent",
+    )
 
-# =========================================================
-# Compile
-# =========================================================
-
-agent = graph.compile()
+    return graph.compile()

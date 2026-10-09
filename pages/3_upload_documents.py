@@ -1,6 +1,7 @@
 import streamlit as st
 
-from utils.file_handler import save_uploaded_file
+from utils.file_handler import UploadError, save_uploaded_file
+from utils.session import require_staff
 
 from database.document_repository import (
     save_document,
@@ -15,6 +16,8 @@ st.set_page_config(
     page_icon="📄",
     layout="wide"
 )
+
+require_staff()
 
 st.title("📄 Upload Loan Documents")
 st.caption("Upload all mandatory documents for loan verification.")
@@ -45,7 +48,8 @@ with col1:
 
     pan = st.file_uploader(
         "PAN Card",
-        type=["jpg", "jpeg", "png", "pdf"],
+        # OCR reads images only
+        type=["jpg", "jpeg", "png"],
         help="Upload PAN Card"
     )
 
@@ -59,7 +63,8 @@ with col2:
 
     aadhaar = st.file_uploader(
         "Aadhaar Card",
-        type=["jpg", "jpeg", "png", "pdf"],
+        # OCR reads images only
+        type=["jpg", "jpeg", "png"],
         help="Upload Aadhaar Card"
     )
 
@@ -106,11 +111,16 @@ if st.button("📤 Upload Documents", use_container_width=True):
             st.warning(f"⚠ {doc_type} already uploaded.")
             continue
 
-        file_path = save_uploaded_file(
-            uploaded_file,
-            customer_id,
-            application_id,
-        )
+        try:
+            file_path = save_uploaded_file(
+                uploaded_file,
+                customer_id,
+                application_id,
+                doc_type,
+            )
+        except UploadError as exc:
+            st.error(f"❌ {doc_type}: {exc}")
+            continue
 
         save_document(
             {

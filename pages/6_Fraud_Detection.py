@@ -1,6 +1,8 @@
 import streamlit as st
 
+from services.tracker_service import fraud_completed
 from src.fraud_agent import fraud_check
+from utils.session import require_staff
 
 
 st.set_page_config(
@@ -8,6 +10,7 @@ st.set_page_config(
     page_icon="🛡️"
 )
 
+require_staff()
 
 st.title("🛡️ Fraud Detection")
 
@@ -21,10 +24,26 @@ if not application_id or not customer_id:
     st.stop()
 
 
-result = fraud_check(
-    application_id,
-    customer_id
-)
+if st.button("Run Fraud Screening", type="primary", use_container_width=True):
+
+    result = fraud_check(
+        application_id,
+        customer_id
+    )
+
+    fraud_completed(application_id, result["risk"])
+
+    st.session_state["fraud_result"] = {
+        "application_id": application_id,
+        **result,
+    }
+
+
+result = st.session_state.get("fraud_result")
+
+if not result or result["application_id"] != application_id:
+    st.info("Run fraud screening to analyse the uploaded documents.")
+    st.stop()
 
 
 st.subheader("Fraud Detection Result")
@@ -36,16 +55,17 @@ if result["risk"] == "HIGH":
 
 elif result["risk"] == "MEDIUM":
 
-    st.warning("⚠️ Medium Fraud Risk")
+    st.warning("⚠️ Medium Fraud Risk - officer review required")
 
 else:
 
     st.success("✅ Low Fraud Risk")
 
 
-st.write(
-    f"### Risk Level : {result['risk']}"
-)
+c1, c2 = st.columns(2)
+
+c1.metric("Risk Level", result["risk"])
+c2.metric("Risk Score", result["risk_score"])
 
 
 st.write("### Findings")
@@ -54,3 +74,10 @@ st.write("### Findings")
 for reason in result["reasons"]:
 
     st.write(f"- {reason}")
+
+
+st.page_link(
+    "pages/7_AI_Loan_Decision.py",
+    label="Continue to AI Loan Decision",
+    icon="➡️",
+)

@@ -183,11 +183,12 @@ def documents_uploaded(application_id, document_list):
 # -------------------------------------------------
 def ocr_completed(application_id, confidence):
 
-    status = "COMPLETED" if confidence >= 90 else "MANUAL_REVIEW"
+    # 75% is the "Good" OCR quality band used by ocr_service.
+    status = "COMPLETED" if confidence >= 75 else "MANUAL_REVIEW"
 
     remarks = (
         f"OCR completed ({confidence:.2f}% confidence)"
-        if confidence >= 90
+        if confidence >= 75
         else f"Low OCR confidence ({confidence:.2f}%)"
     )
 
@@ -252,36 +253,19 @@ def fraud_completed(application_id, risk):
 # -------------------------------------------------
 # AI Decision
 # -------------------------------------------------
-def ai_decision(application_id, decision, explanation):
+def record_decision(application_id, decision, risk_level, explanation):
 
-    decision = decision.upper()
+    decision = decision.upper().replace(" ", "_")
 
-    if decision == "APPROVED":
+    update_application_status(
+        application_id,
+        decision,
+        risk_level
+    )
 
-        update_application_status(
-            application_id,
-            "APPROVED",
-            "LOW"
-        )
-
-        add_stage(
-            application_id,
-            "AI Decision",
-            "APPROVED",
-            explanation
-        )
-
-    else:
-
-        update_application_status(
-            application_id,
-            "REJECTED",
-            "HIGH"
-        )
-
-        add_stage(
-            application_id,
-            "AI Decision",
-            "REJECTED",
-            explanation
-        )
+    add_stage(
+        application_id,
+        "AI Decision",
+        decision,
+        explanation
+    )
