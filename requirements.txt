@@ -1,0 +1,35 @@
+# --- Web UI ---
+streamlit>=1.37
+pandas>=2.0
+
+# --- Config / security ---
+python-dotenv>=1.0
+bcrypt>=4.0
+
+# --- LLM orchestration ---
+langchain-core>=0.3
+langchain-community>=0.3
+langchain-text-splitters>=0.3
+langchain-huggingface>=0.1
+langchain-groq>=0.2
+langchain-google-genai>=2.0
+langgraph>=0.2
+
+# --- RAG ---
+faiss-cpu>=1.8
+sentence-transformers>=3.0
+transformers>=4.40
+torch>=2.2
+
+# --- MCP ---
+mcp>=1.2
+langchain-mcp-adapters>=0.1
+
+# --- OCR (also install the Tesseract binary, see README) ---
+opencv-python-headless>=4.9
+pytesseract>=0.3.10
+easyocr>=1.7
+numpy>=1.26
+
+# --- Reports ---
+reportlab>=4.0

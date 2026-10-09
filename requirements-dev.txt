@@ -1,0 +1,5 @@
+# The unit tests only need the standard library plus these,
+# so CI does not have to download torch / OCR models.
+pytest>=8.0
+python-dotenv>=1.0
+pyflakes>=3.2
