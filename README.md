@@ -1,4 +1,9 @@
-# 🤖 AI Loan Processing System
+# 🤖 AI Loan Processing Platform
+
+[![tests](https://github.com/darshanarekhate/AI-Loan-Processing-Platform/actions/workflows/tests.yml/badge.svg)](https://github.com/darshanarekhate/AI-Loan-Processing-Platform/actions/workflows/tests.yml)
+![Python](https://img.shields.io/badge/python-3.11%2B-blue)
+![Streamlit](https://img.shields.io/badge/UI-Streamlit-red)
+![LangGraph](https://img.shields.io/badge/AI-LangGraph%20%7C%20RAG%20%7C%20MCP-purple)
 
 An end-to-end **AI-assisted loan processing platform**: customer onboarding,
 document OCR, KYC verification, fraud screening, an **explainable rule-based
@@ -7,6 +12,39 @@ credit decision**, PDF reports, dashboards and a conversational
 Context Protocol (MCP)**.
 
 > Educational / portfolio project — not a production lending system.
+
+---
+
+## 📖 What does it do? (in plain words)
+
+A bank receives a loan request. Normally an officer must check the
+customer's identity documents, look for signs of fraud, work out whether
+the customer can afford the monthly payment, and then approve or reject.
+This platform automates that journey:
+
+| Step | What happens | Behind the scenes |
+|---|---|---|
+| 1. **Register customer** | Officer enters name, phone, PAN, Aadhaar, DOB | Inputs validated — PAN format, Aadhaar checksum, age ≥ 18, no duplicates |
+| 2. **Loan application** | Choose loan type, amount, income, tenure, credit score | Live **EMI** preview and how much of the income it uses |
+| 3. **Upload documents** | Upload PAN and Aadhaar card images | File type, size and real file content are checked |
+| 4. **OCR** | Text is read from the card images | Image cleaned with OpenCV → read with Tesseract / EasyOCR → number, name, DOB extracted |
+| 5. **KYC** | Is this really the registered person? | Name, PAN, Aadhaar and DOB on the cards compared with the registration |
+| 6. **Fraud check** | Anything suspicious? | Risk score from blurry scans, missing fields, invalid numbers, mismatches, too many applications |
+| 7. **Decision** | Approve, reject or send to an officer | Transparent bank rules decide; AI writes a friendly explanation |
+| 8. **Report & dashboards** | Download a PDF, see statistics | ReportLab PDF with masked ID numbers; charts of approvals and risk |
+| 9. **AI Loan Assistant** | Customer chats: *"Why was my loan rejected?"* | Answers from their own data and the bank's policy documents |
+
+### Example: one application
+
+```text
+Car Loan · ₹5,00,000 · 60 months · income ₹80,000 · credit score 780
+
+EMI at 10.5%  = ₹10,747  →  13% of income (limit 50%)   ✅
+Credit score  = 780       →  ≥ 750 auto-approve band     ✅
+KYC           = VERIFIED                                 ✅
+Fraud risk    = LOW                                      ✅
+Decision      = APPROVED  (risk LOW)
+```
 
 ---
 
@@ -84,8 +122,8 @@ The decision page also shows the **maximum affordable amount** at a 50 % FOIR.
 installed (auto-detected on `PATH` or the default Windows folder).
 
 ```bash
-git clone https://github.com/<your-username>/AI-Loan-Processing-System.git
-cd AI-Loan-Processing-System
+git clone https://github.com/darshanarekhate/AI-Loan-Processing-Platform.git
+cd AI-Loan-Processing-Platform
 python -m venv .venv
 ```
 
@@ -135,6 +173,22 @@ streamlit run app.py
 
 Log in as staff and follow the sidebar: **Registration → Loan Application →
 Upload → OCR → KYC → Fraud → AI Decision → Report**.
+
+### 💬 Try the AI Loan Assistant
+
+Create a customer login for an application, log in as that customer and open
+**AI Loan Assistant**:
+
+| Question | Answered by |
+|---|---|
+| *What is my loan status?* | Database (instant, no AI cost) |
+| *What is my KYC status?* / *What is my fraud risk?* | Database |
+| *What is the maximum LTV for a car loan?* | MCP policy tool |
+| *What documents are required for KYC?* | Policy documents (RAG) |
+| *Why was my loan sent for manual review?* | LangGraph agent + Groq LLM |
+| *Based on my income, should I choose a longer tenure?* | LangGraph agent + Groq LLM |
+
+Customers only ever see their own application; PAN, Aadhaar and phone are masked.
 
 MCP server check (optional):
 
